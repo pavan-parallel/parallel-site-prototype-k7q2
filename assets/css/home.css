@@ -9,8 +9,6 @@
 /* ============ 1 · Hero ============ */
 .h-hero {
   position: relative; height: 719px; padding: 70px var(--gutter);
-  /* let the card stack run up behind the transparent header, like Figma; clip everything else */
-  clip-path: inset(calc(var(--nav-h) * -1) 0 0 0);
 }
 .h-hero__row { position: relative; z-index: 2; pointer-events: none; }
 .h-hero__copy { width: 436px; }
@@ -19,7 +17,9 @@
 .h-hero__title .h-line { display: block; overflow: hidden; padding-bottom: .06em; margin-bottom: -.06em; }
 .h-hero__title .h-line > span { display: block; }
 
-.h-cards { position: absolute; left: 498px; top: 70px; width: 902px; height: 527px; z-index: 1; }
+/* stage runs up behind the transparent header (like Figma) and clips the loop everywhere else */
+.h-hero__stage { position: absolute; left: 0; right: 0; top: calc(var(--nav-h) * -1); bottom: 0; overflow: hidden; z-index: 1; }
+.h-cards { position: absolute; left: 498px; top: calc(70px + var(--nav-h)); width: 902px; height: 527px; z-index: 1; }
 .h-card {
   position: absolute; left: 0; top: 0; width: 338px; height: 436px;
   border-radius: 14px; overflow: hidden; opacity: 0;
@@ -62,7 +62,7 @@
 .h-logo__inhouse { left: calc(50% - .33px); top: 50%; width: 133.333px; height: 32px; transform: translate(-50%, -50%); }
 
 /* ============ 3 · Early, messy, bold ============ */
-.h-early { display: flex; gap: 64px; align-items: flex-start; padding-top: 140px; padding-bottom: 140px; }
+.h-early { display: flex; gap: 64px; align-items: flex-start; min-height: 574px; padding-top: 140px; padding-bottom: 140px; }
 .h-early__title { flex: none; width: 460px; font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: 1.2; letter-spacing: -2.5px; color: var(--ink); }
 .h-early__body { flex: 1 1 0; min-width: 0; }
 .h-early__statement { font-family: var(--serif); font-size: 33px; line-height: 1.45; letter-spacing: -1.1px; color: var(--ink); }
@@ -176,7 +176,7 @@
 .h-partner__cal img { position: absolute; left: -.28%; top: -.43%; width: 100.66%; height: 101.15%; max-width: none; }
 
 /* ============ 9 · FAQs ============ */
-.h-faq { display: flex; flex-direction: column; gap: 28px; padding-top: 100px; padding-bottom: 100px; }
+.h-faq { display: flex; flex-direction: column; gap: 28px; padding-top: 100px; padding-bottom: 96px; } /* -4px: browser line boxes run ~4px taller than Figma over 6 rows */
 .h-faq__item { padding-bottom: 40px; }
 .h-faq__item + .h-faq__item { border-top: 1px solid rgba(17,17,17,.1); }
 .h-faq__item h3 { font: inherit; }
