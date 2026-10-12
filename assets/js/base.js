@@ -1,0 +1,92 @@
+/* Parallel prototype · shared behaviour
+   - Lenis smooth scroll (same settings as live: lerp .1, wheelMultiplier 1.2) wired into GSAP ScrollTrigger
+   - Header: hides on scroll down, returns solid on scroll up (live newheader.js behaviour)
+   - [data-fade-up]: fade + rise on enter
+   - [data-scroll-reveal]: statement words fill from 30% to ink as you scroll (live Home statement)
+     Words inside <span class="dim"> stay dim (two-tone statements).
+   Page scripts can use window.P.lenis, window.P.onReady(fn).
+*/
+(function () {
+  const P = (window.P = window.P || {});
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) document.documentElement.classList.add("reduced-motion");
+  const ready = [];
+  P.onReady = (fn) => ready.push(fn);
+
+  function initLenis() {
+    if (reduced || !window.Lenis) return null;
+    const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1.2, smoothWheel: true });
+    lenis.on("scroll", () => window.ScrollTrigger && ScrollTrigger.update());
+    gsap.ticker.add((t) => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+    document.querySelectorAll('a[href^="#"]').forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const id = a.getAttribute("href");
+        if (id.length < 2) return;
+        const el = document.querySelector(id);
+        if (!el) return;
+        e.preventDefault();
+        lenis.scrollTo(el, { offset: -20, duration: 1.2 });
+      });
+    });
+    return lenis;
+  }
+
+  function initHeader() {
+    const h = document.querySelector(".site-header");
+    if (!h) return;
+    let last = 0;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const down = y > last;
+      h.classList.toggle("is-solid", y > 40);
+      h.classList.toggle("is-hidden", down && y > 200);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
+
+  function initFadeUps() {
+    if (reduced) return;
+    gsap.utils.toArray("[data-fade-up]").forEach((el) => {
+      const delay = parseFloat(el.dataset.fadeUp) || 0;
+      gsap.to(el, {
+        opacity: 1, y: 0, duration: 1, delay, ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 88%", once: true },
+      });
+    });
+  }
+
+  function initScrollReveal() {
+    gsap.utils.toArray("[data-scroll-reveal]").forEach((el) => {
+      if (reduced || !window.SplitText) return;
+      const split = new SplitText(el, { type: "words", wordsClass: "sr-word" });
+      const words = split.words.filter((w) => !w.closest(".dim"));
+      gsap.set(words, { opacity: 0.3 });
+      gsap.to(words, {
+        opacity: 1, ease: "none", stagger: 0.1,
+        scrollTrigger: { trigger: el, start: "top 80%", end: "bottom 45%", scrub: true },
+      });
+    });
+  }
+
+  function init() {
+    if (window.gsap) {
+      gsap.registerPlugin(...[window.ScrollTrigger, window.SplitText].filter(Boolean));
+    }
+    P.lenis = initLenis();
+    initHeader();
+    if (window.gsap) {
+      initFadeUps();
+      initScrollReveal();
+    }
+    ready.forEach((fn) => { try { fn(P); } catch (e) { console.error(e); } });
+    if (window.ScrollTrigger) {
+      window.addEventListener("load", () => ScrollTrigger.refresh());
+    }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
