@@ -1,1 +1,143 @@
-/* We page styles */
+/* We page styles · Figma 5513:243030 "We [Final Copy] · tidied (Claude)"
+   Vertical rhythm follows the frame: main starts at y=89 (after the shared header). */
+
+/* ---------- 1 · Hero ---------- */
+.w-hero__copy { height: 496px; padding-top: 176px; } /* heading at y=265, logo row at y=585 */
+.w-hero__title {
+  font-family: var(--serif); font-weight: 400; font-size: 80px; line-height: 1.2; letter-spacing: -3.2px;
+  width: 694px; color: var(--ink);
+}
+.w-hero__sub {
+  margin: 20px 0 0 0; width: 686px;
+  font-size: 24px; line-height: 1.4; color: var(--ink-80);
+}
+.w-hero__title .w-line, .w-hero__sub .w-line { padding-bottom: .08em; margin-bottom: -.08em; } /* keep descenders inside the line mask */
+
+.w-logos { display: flex; justify-content: center; height: 164px; padding: 0 40px; }
+.w-logos__cell { position: relative; width: 213.333px; height: 164px; flex: none; opacity: .5; }
+.w-logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: none; }
+.w-logo--meta { width: 105.333px; height: 32px; }
+.w-logo--meta .w-logo__sym { position: absolute; left: .169px; top: 5.475px; width: 31.84px; height: 21.045px; }
+.w-logo--meta .w-logo__word { position: absolute; left: 38.71px; top: 6.147px; width: 66.459px; height: 20.376px; }
+.w-logo--google { width: 97.882px; height: 32px; }
+.w-logo--urbanpiper { left: 39.67px; top: 66px; transform: none; width: 134px; height: 27.29px; }
+.w-logo--dell { width: 89.333px; height: 26.667px; margin-left: -6px; } /* Figma box 104 wide, glyphs inset 1.28% / 12.82% */
+.w-logo--digilocker { left: 41.15px; top: 64.35px; transform: none; width: 131.205px; height: 32px; }
+.w-logo--inhouse { width: 133.333px; height: 32px; }
+
+.w-hero__reel { position: relative; height: 720px; margin: 0 var(--gutter); overflow: hidden; background: var(--ink); } /* hero frame clips the 1440 photo to the 1360 column */
+.w-hero__img { position: absolute; left: calc(-1 * var(--gutter)); top: -10px; width: 1440px; height: 740px; max-width: none; object-fit: cover; transform-origin: 50% 50%; }
+
+/* Hero is hidden until we.js runs its load-in (we.js always reveals it, even without GSAP) */
+.w-hero__title, .w-hero__sub, .w-logos, .w-hero__reel { visibility: hidden; }
+.w-hero-ready .w-hero__title, .w-hero-ready .w-hero__sub, .w-hero-ready .w-logos, .w-hero-ready .w-hero__reel { visibility: visible; }
+
+/* ---------- 2 · In-house statement ---------- */
+.w-inhouse { padding-top: 80px; }
+.w-inhouse__text {
+  width: 1200px; font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: 1.25; letter-spacing: -2.5px; color: var(--ink);
+}
+
+/* ---------- 3 · Parallel means side by side + word roller ---------- */
+.w-side { padding-top: 160px; }
+.w-side__inner { position: relative; height: 407px; }
+.w-side__copy { position: absolute; left: 0; top: 47px; width: 424px; display: flex; flex-direction: column; gap: 11px; }
+.w-side__title { font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: 1.2; letter-spacing: -2.5px; white-space: nowrap; }
+.w-side__body { font-size: 20px; line-height: 1.5; color: var(--ink-80); }
+
+.w-roller {
+  --lh: 112.6425px;
+  position: absolute; left: 560px; top: 47px; width: 744px; height: 113px;
+  font-family: var(--serif); font-weight: 400; font-size: 75.095px; line-height: 1.5; letter-spacing: -5.3639px; color: #000;
+}
+.w-roller__no { position: absolute; left: -.24px; top: 0; white-space: nowrap; }
+/* window spans the two Figma fades: y -112.85 → 224.15 */
+.w-roller__window { position: absolute; left: 158px; top: -112.85px; width: 600px; height: 337px; overflow: hidden; }
+.w-roller__track { position: absolute; left: 0; top: calc(112.85px - 2 * var(--lh)); will-change: transform; }
+.w-roller__word { height: var(--lh); white-space: nowrap; }
+.w-roller__fade { position: absolute; left: 158px; width: 586px; height: 168px; pointer-events: none; z-index: 1; }
+.w-roller__fade--top { top: -112.85px; background: linear-gradient(to bottom, #fff 31.427%, rgba(255,255,255,0)); }
+.w-roller__fade--bottom { top: 56.15px; background: linear-gradient(to top, #fff 31.427%, rgba(255,255,255,0)); }
+
+/* ---------- 4 · Numbers sentence ---------- */
+.w-numbers { padding-top: 160px; }
+.w-numbers__text { font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: 1.25; letter-spacing: -2.5px; color: var(--ink); }
+.w-count { display: inline-block; text-align: left; }
+
+/* ---------- 5 · Leaders ---------- */
+.w-leaders { padding-top: 160px; }
+.w-leaders__title, .w-work__title, .w-believe__title {
+  font-family: var(--serif); font-weight: 400; font-size: 44px; line-height: 1.3; letter-spacing: -1.76px; white-space: nowrap;
+}
+.w-leaders__list { margin-top: 56px; }
+.w-leader {
+  position: relative; display: flex; align-items: flex-start; height: 148px; padding: 35px 0 36px;
+  border-top: 1px solid var(--ink-10); cursor: default;
+}
+.w-leader:last-child { border-bottom: 1px solid var(--ink-10); }
+.w-leader.is-active { z-index: 5; }
+.w-leader__name { width: 560px; flex: none; font-family: var(--serif); font-size: 32px; line-height: 1.2; letter-spacing: -.96px; white-space: nowrap; }
+.w-leader__role { width: 300px; flex: none; padding-top: 8px; font-size: 16px; line-height: 1.5; color: var(--ink-60); white-space: nowrap; }
+.w-leader__tbd { color: rgba(17,17,17,.4); }
+.w-leader__line { flex: 1 0 0; padding-top: 6px; font-size: 18px; line-height: 1.5; color: var(--ink-80); }
+
+/* Hover portrait: absolutely placed at the row's top-left, moved to the cursor by we.js */
+.w-leader__card {
+  position: absolute; left: 0; top: 0; width: 150px; height: 188px; margin: -94px 0 0 -75px;
+  pointer-events: none; z-index: 2; opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.w-leader__photo {
+  position: relative; width: 100%; height: 100%; border-radius: 6px; overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0,0,0,.12); background: #ececec;
+}
+.w-leader__photo img { position: absolute; left: -27.37%; top: -40%; width: 154.73%; height: 166.67%; max-width: none; }
+.w-leader__photo.ph::after { left: 12px; bottom: 12px; font-size: 12px; padding: 6px 10px; }
+
+/* ---------- 6 · Selected work ---------- */
+.w-work { padding-top: 160px; }
+.w-work__grid { display: flex; gap: 40px; margin-top: 56px; }
+.w-card { display: flex; flex-direction: column; gap: 16px; width: 426.67px; flex: none; }
+.w-card__media { position: relative; height: 336px; overflow: hidden; background: #eef0f3; }
+.w-card__media img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  transition: transform 1s cubic-bezier(.2,.7,.2,1);
+}
+.w-card:hover .w-card__media img { transform: scale(1.05); }
+.w-card__tag {
+  position: absolute; left: 20px; top: 20px; padding: 8px 20px; border-radius: 32px;
+  background: rgba(17,17,17,.2); -webkit-backdrop-filter: blur(10.4px); backdrop-filter: blur(10.4px);
+  box-shadow: 4px 4px 4px rgba(202,182,148,.02);
+  font-size: 14px; font-weight: 500; line-height: 1.2; color: #fff; white-space: nowrap;
+}
+.w-card__text { display: flex; flex-direction: column; gap: 4px; }
+.w-card__name { font-family: var(--sans); font-size: 24px; font-weight: 600; line-height: 1.2; color: var(--ink); }
+.w-card__desc { font-size: 20px; line-height: 1.5; color: var(--ink-80); opacity: .6; }
+.w-work__more { margin-top: 56px; height: auto; padding: 16px 16px 16px 24px; line-height: 1.2; }
+.w-work__more svg { width: 20px; height: 20px; }
+
+/* ---------- 7 · We believe ---------- */
+.w-believe { display: flex; justify-content: space-between; align-items: flex-start; padding-top: 160px; }
+.w-believe__title { width: 421px; }
+.w-believe__list { width: 800px; flex: none; }
+.w-belief { display: flex; align-items: flex-start; gap: 30px; width: 766px; padding: 31px 0 32px; border-top: 1px solid var(--ink-10); } /* Figma strokes sit inside: 31 + 1px rule = 32 */
+.w-belief:first-child { padding-top: 12px; border-top: 0; }
+.w-belief:last-child { padding-bottom: 31px; border-bottom: 1px solid var(--ink-10); }
+.w-belief__icon { width: 36px; height: 36px; flex: none; }
+.w-belief__icon--circles { width: 36.75px; height: 32px; margin-right: -.75px; }
+.w-belief__text { width: 640px; display: flex; flex-direction: column; gap: 12px; }
+.w-belief__name { font-family: var(--sans); font-size: 24px; font-weight: 600; line-height: 29px; color: var(--ink); }
+.w-belief__line { width: 545px; font-size: 20px; line-height: 1.5; color: var(--ink-80); opacity: .6; }
+
+/* ---------- 8 · Makers CTA ---------- */
+.w-makers { padding-top: 160px; padding-bottom: 120px; }
+.w-makers__title { font-family: var(--serif); font-weight: 400; font-size: 80px; line-height: 1.2; letter-spacing: -3.2px; white-space: nowrap; }
+.w-makers__title em { font-style: italic; }
+.w-makers__body { width: 640px; margin-top: 32px; font-size: 20px; line-height: 1.5; color: var(--ink-80); }
+.w-makers__cta { margin-top: 96px; }
+.w-makers__rule { height: 1px; background: var(--ink-10); }
+.w-makers__row { display: flex; align-items: center; justify-content: space-between; height: 48px; margin-top: 32px; }
+.w-makers__line { font-size: 20px; font-weight: 500; line-height: 1.5; color: var(--ink); }
+.w-makers__actions { display: flex; align-items: center; gap: 32px; }
+.w-makers__book { height: 48px; padding: 0 24px; font-weight: 500; line-height: 1; }
+.w-makers__join { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--ink); text-underline-offset: 3px; transition: opacity .25s; }
+.w-makers__join:hover { opacity: .6; }

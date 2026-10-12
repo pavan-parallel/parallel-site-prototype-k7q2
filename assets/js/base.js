@@ -11,7 +11,11 @@
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced) document.documentElement.classList.add("reduced-motion");
   const ready = [];
-  P.onReady = (fn) => ready.push(fn);
+  let inited = false;
+  P.onReady = (fn) => {
+    if (inited) { try { fn(P); } catch (e) { console.error(e); } }
+    else ready.push(fn);
+  };
 
   function initLenis() {
     if (reduced || !window.Lenis) return null;
@@ -59,7 +63,7 @@
   }
 
   function initScrollReveal() {
-    gsap.utils.toArray("[data-scroll-reveal]").forEach((el) => {
+    const run = () => gsap.utils.toArray("[data-scroll-reveal]").forEach((el) => {
       if (reduced || !window.SplitText) return;
       const split = new SplitText(el, { type: "words", wordsClass: "sr-word" });
       const words = split.words.filter((w) => !w.closest(".dim"));
@@ -68,6 +72,10 @@
         opacity: 1, ease: "none", stagger: 0.1,
         scrollTrigger: { trigger: el, start: "top 80%", end: "bottom 45%", scrub: true },
       });
+    });
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => {
+      run();
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
     });
   }
 
@@ -81,12 +89,14 @@
       initFadeUps();
       initScrollReveal();
     }
-    ready.forEach((fn) => { try { fn(P); } catch (e) { console.error(e); } });
+    inited = true;
+    ready.splice(0).forEach((fn) => { try { fn(P); } catch (e) { console.error(e); } });
     if (window.ScrollTrigger) {
       window.addEventListener("load", () => ScrollTrigger.refresh());
     }
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
+  // Wait for DOMContentLoaded so deferred page scripts (which run after this file) can register P.onReady first.
+  if (document.readyState === "complete") init();
+  else document.addEventListener("DOMContentLoaded", init);
 })();

@@ -16,6 +16,8 @@
   <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
   <!-- page-specific libraries (e.g. Splide) go here -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide-core.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
   <script defer src="assets/js/base.js"></script>
   <script defer src="assets/js/home.js"></script>
 </head>
@@ -38,7 +40,286 @@
   <div class="header-spacer"></div>
 
   <main class="page">
-    <!-- home sections go here, top to bottom, one <section> per Figma section -->
+    <!-- 1 · Hero (Figma 5513:224592) -->
+    <section class="h-hero" aria-label="Intro">
+      <div class="h-hero__row">
+        <div class="h-hero__copy">
+          <h1 class="h-hero__title" data-hero-title>Win on<br>Taste</h1>
+          <p class="h-hero__sub" data-hero-sub>Forward-deployed design and technology teams for ambitious ideas.</p>
+        </div>
+      </div>
+      <!-- Diagonal card carousel (live: "Diagonal Carousel" code component). Cards are built by home.js from these sources. -->
+      <div class="h-cards" data-hero-cards aria-hidden="true">
+        <template data-card data-glow="96"><img src="assets/img/home/hero-img-b.jpg" alt="" class="h-card__img h-card__img--bird"></template>
+        <template data-card data-glow="96"><img src="assets/img/home/hero-img-a.jpg" alt="" class="h-card__img"></template>
+        <template data-card data-glow="0"><img src="assets/img/home/hero-img-c.jpg" alt="" class="h-card__img h-card__img--ear"></template>
+        <template data-card data-glow="70"><img src="assets/img/home/hero-img-d.jpg" alt="" class="h-card__img"></template>
+      </div>
+      <div class="h-hero__fade h-hero__fade--top" aria-hidden="true"></div>
+      <div class="h-hero__fade h-hero__fade--bottom" aria-hidden="true"></div>
+      <div class="h-hero__cta" data-hero-cta>
+        <a class="pill h-pill" href="#book">Book a call
+          <svg viewBox="0 0 20 20" fill="none"><path d="M5 15L15 5M6.875 5H15v8.125" stroke="currentColor" stroke-width=".9375" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </section>
+
+    <!-- 2 · Client logos (Figma 5513:224617) · CSS marquee like live -->
+    <section class="h-logos" aria-label="Clients">
+      <div class="h-logos__viewport" data-marquee>
+        <div class="h-logos__list" data-marquee-list>
+          <div class="h-logo"><span class="h-logo__meta"><img class="h-logo__meta-word" src="assets/img/home/logo-meta-word.svg" alt=""><img class="h-logo__meta-sym" src="assets/img/home/logo-meta-symbol.svg" alt="Meta"></span></div>
+          <div class="h-logo"><img class="h-logo__google" src="assets/img/home/logo-google.svg" alt="Google"></div>
+          <div class="h-logo"><img class="h-logo__urbanpiper" src="assets/img/home/logo-urbanpiper.png" alt="UrbanPiper"></div>
+          <div class="h-logo"><span class="h-logo__dell"><img src="assets/img/home/logo-dell.svg" alt="Dell"></span></div>
+          <div class="h-logo"><img class="h-logo__digilocker" src="assets/img/home/logo-digilocker.svg" alt="DigiLocker"></div>
+          <div class="h-logo"><img class="h-logo__inhouse" src="assets/img/home/logo-inhouse.svg" alt="Inhouse"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Early, messy, bold (Figma 5513:224710) -->
+    <section class="h-early wrap">
+      <h2 class="h-early__title" data-fade-up>We like it early,<br>messy, and bold.</h2>
+      <div class="h-early__body">
+        <p class="h-early__statement" data-scroll-reveal><span class="dim">Founders call us when </span>their product and brand<br>don’t match up to their vision.<span class="dim"> When the</span><br>scrappy version starts holding them back,<span class="dim"> and<br>when </span>adoption depends on the user experience.</p>
+        <p class="h-early__note" data-fade-up="0.1">They need momentum and don’t have a year to hire their way out. That’s where we come in.</p>
+      </div>
+    </section>
+
+    <!-- 4 · Work band (Figma 5513:224754) -->
+    <section class="h-work" id="work" aria-label="Work" data-work>
+      <img class="h-work__glow" src="assets/img/home/work-glow.svg" alt="" aria-hidden="true">
+      <h2 class="h-work__title">Work</h2>
+      <span class="h-work__line h-work__line--a" aria-hidden="true"></span>
+      <span class="h-work__line h-work__line--b" aria-hidden="true"></span>
+
+      <div class="h-work__stage" data-work-stage>
+        <!-- 01 · AI Product Design · Sarvam (Figma) -->
+        <article class="h-case is-active" data-case="0">
+          <a class="h-case__media" href="https://www.parallelhq.com/work/sarvam-ai-parallel" target="_blank" rel="noopener" data-case-media>
+            <img src="assets/img/home/work-sarvam.jpg" alt="Sarvam: Namaste, a multi-modal AI interface">
+          </a>
+          <div class="h-case__meta">
+            <div class="h-case__info">
+              <span class="h-case__logo"><img class="h-case__logo--sarvam" src="assets/img/home/sarvam-word.svg" alt="Sarvam"></span>
+              <p class="h-case__desc">Multi-modal AI interfaces for the next billion users</p>
+              <p class="h-case__tag">FRONTIER LAB</p>
+            </div>
+            <dl class="h-case__stats">
+              <div class="h-case__stat h-case__stat--narrow"><dt>Raised</dt><dd>$350M</dd></div>
+              <div class="h-case__stat"><dt>Backed by</dt><dd>Bessemer Venture Partners</dd></div>
+            </dl>
+          </div>
+        </article>
+        <!-- 02 · Product Design · Gullak (live) -->
+        <article class="h-case" data-case="1" aria-hidden="true">
+          <a class="h-case__media" href="https://www.parallelhq.com/work/gullak" target="_blank" rel="noopener" data-case-media tabindex="-1">
+            <video muted loop playsinline preload="none" poster="assets/img/home/work-gullak-poster.jpg"><source src="assets/img/home/work-gullak.mp4" type="video/mp4"></video>
+          </a>
+          <div class="h-case__meta">
+            <div class="h-case__info">
+              <span class="h-case__logo"><img src="assets/img/home/wlogo-gullak.svg" alt="Gullak"></span>
+              <p class="h-case__desc">Building digital gold investing for the largest physical gold economy</p>
+              <p class="h-case__tag">B2C GOLD INVESTMENT APP</p>
+            </div>
+            <dl class="h-case__stats">
+              <div class="h-case__stat"><dt>Engagement</dt><dd>MVP to Series A</dd></div>
+              <div class="h-case__stat"><dt>Backed by</dt><dd>Y Combinator, Better Ventures</dd></div>
+            </dl>
+          </div>
+        </article>
+        <!-- 03 · UX Research · Meta (live) -->
+        <article class="h-case" data-case="2" aria-hidden="true">
+          <a class="h-case__media" href="https://www.parallelhq.com/work/meta-2026-l-parallel" target="_blank" rel="noopener" data-case-media tabindex="-1">
+            <video muted loop playsinline preload="none" poster="assets/img/home/work-meta-poster.jpg"><source src="assets/img/home/work-meta.mp4" type="video/mp4"></video>
+          </a>
+          <div class="h-case__meta">
+            <div class="h-case__info">
+              <span class="h-case__logo"><img src="assets/img/home/wlogo-meta.svg" alt="Meta"></span>
+              <p class="h-case__desc">Establishing trust, transparency, and control in an AI-native world</p>
+              <p class="h-case__tag">AMBIENT AI</p>
+            </div>
+            <dl class="h-case__stats">
+              <div class="h-case__stat"><dt>Designed for</dt><dd>Contextual AI experiences &amp; Responsible AI</dd></div>
+            </dl>
+          </div>
+        </article>
+        <!-- 04 · Brand Design · Anthriq (live) -->
+        <article class="h-case" data-case="3" aria-hidden="true">
+          <a class="h-case__media" href="https://www.parallelhq.com/work/anthriq" target="_blank" rel="noopener" data-case-media tabindex="-1">
+            <video muted loop playsinline preload="none" poster="assets/img/home/work-anthric-poster.jpg"><source src="assets/img/home/work-anthric.mp4" type="video/mp4"></video>
+          </a>
+          <div class="h-case__meta">
+            <div class="h-case__info">
+              <span class="h-case__logo"><img src="assets/img/home/wlogo-anthriq.svg" alt="Anthriq"></span>
+              <p class="h-case__desc">Repositioning a deep-tech biosignal company for the enterprise market</p>
+              <p class="h-case__tag">BIOSIGNAL API</p>
+            </div>
+            <dl class="h-case__stats">
+              <div class="h-case__stat"><dt>Global rank for neurotech</dt><dd>7th</dd></div>
+              <div class="h-case__stat"><dt>Backed by</dt><dd>Gruhas, Smile Group</dd></div>
+            </dl>
+          </div>
+        </article>
+        <!-- 05 · Growth Websites · Pixxel (live) -->
+        <article class="h-case" data-case="4" aria-hidden="true">
+          <a class="h-case__media" href="https://www.parallelhq.com/work/pixxel" target="_blank" rel="noopener" data-case-media tabindex="-1">
+            <video muted loop playsinline preload="none" poster="assets/img/home/work-pixxel-poster.jpg"><source src="assets/img/home/work-pixxel.mp4" type="video/mp4"></video>
+          </a>
+          <div class="h-case__meta">
+            <div class="h-case__info">
+              <span class="h-case__logo"><img class="h-case__logo--pixxel" src="assets/img/home/wlogo-pixxel.png" alt="Pixxel"></span>
+              <p class="h-case__desc">Web presence for a frontier Earth observation company</p>
+              <p class="h-case__tag">HYPERSPECTRAL IMAGING</p>
+            </div>
+            <dl class="h-case__stats">
+              <div class="h-case__stat h-case__stat--narrow"><dt>Raised</dt><dd>$96M</dd></div>
+              <div class="h-case__stat"><dt>Backed by</dt><dd>Lightspeed, Google</dd></div>
+            </dl>
+          </div>
+        </article>
+      </div>
+
+      <ul class="h-work__cats" role="tablist" aria-label="Work categories" data-work-cats>
+        <li><button class="h-cat is-active" role="tab" aria-selected="true" data-cat="0"><span class="h-cat__num">01</span><span class="h-cat__label">AI Product Design</span></button></li>
+        <li><button class="h-cat" role="tab" aria-selected="false" data-cat="1"><span class="h-cat__num">02</span><span class="h-cat__label">Product Design</span></button></li>
+        <li><button class="h-cat" role="tab" aria-selected="false" data-cat="2"><span class="h-cat__num">03</span><span class="h-cat__label">UX Research</span></button></li>
+        <li><button class="h-cat" role="tab" aria-selected="false" data-cat="3"><span class="h-cat__num">04</span><span class="h-cat__label">Brand Design</span></button></li>
+        <li><button class="h-cat" role="tab" aria-selected="false" data-cat="4"><span class="h-cat__num">05</span><span class="h-cat__label">Growth Websites</span></button></li>
+      </ul>
+      <a class="h-work__all" href="https://www.parallelhq.com/work" target="_blank" rel="noopener">Explore all</a>
+
+      <!-- Cursor follower (live: data-cursor="-inverse" mouse follower). Ring by default, black ↗ disc over a case study. -->
+      <div class="h-cursor" data-work-cursor aria-hidden="true">
+        <span class="h-cursor__ring"><span class="h-cursor__dot"></span></span>
+        <span class="h-cursor__disc"><img src="assets/img/home/work-arrow.svg" alt=""></span>
+      </div>
+    </section>
+
+    <!-- 5 · Stages (Figma 5513:225037) -->
+    <section class="h-stages wrap">
+      <h2 class="h-h2" data-fade-up>We support companies, at every stage.</h2>
+      <div class="h-stages__cards">
+        <article class="h-stage" data-fade-up>
+          <div class="h-stage__head"><span class="h-stage__num">01</span><div><p class="h-stage__name">Early stage</p><p class="h-stage__range">Seed to Series A</p></div></div>
+          <h3 class="h-stage__title">Small teams with<br>a high bar.</h3>
+          <ul class="h-stage__list"><li>AI-first experiences</li><li>Minimum lovable product</li><li>Brand identity and decks</li><li>Launch website</li></ul>
+          <div class="h-stage__clients">
+            <span class="h-cl" style="width:75.449px;height:15.242px;opacity:.55"><img src="assets/img/home/st-inhouse.svg" alt="Inhouse" style="left:-23.43px;top:-38.1px;width:122.318px;height:91.453px"></span>
+            <span class="h-cl" style="width:86.626px;height:18.485px;opacity:.58"><img src="assets/img/home/st-pageloop.svg" alt="Pageloop" style="left:-.46px;top:-.33px;width:87.083px;height:19.835px"></span>
+            <span class="h-cl" style="width:72.271px;height:12.889px;opacity:.45"><img src="assets/img/home/st-modos.png" alt="Modos" style="left:0;top:0;width:100%;height:100%;object-fit:contain"></span>
+          </div>
+        </article>
+        <article class="h-stage" data-fade-up="0.08">
+          <div class="h-stage__head"><span class="h-stage__num">02</span><div><p class="h-stage__name">Growth</p><p class="h-stage__range">Series B and beyond</p></div></div>
+          <h3 class="h-stage__title">Growing teams with<br>growing pains.</h3>
+          <ul class="h-stage__list"><li>Product redesign</li><li>Visual language systems</li><li>Conversion rate optimisation</li><li>Growth design</li></ul>
+          <div class="h-stage__clients">
+            <span class="h-cl" style="width:76.131px;height:12.235px;opacity:.45"><img src="assets/img/home/st-delhivery.svg" alt="Delhivery" style="left:0;top:0;width:100%;height:100%"></span>
+            <span class="h-cl" style="width:100px;height:23.529px;opacity:.62"><img src="assets/img/home/st-healthify.svg" alt="HealthifyMe" style="left:0;top:0;width:100%;height:100%"></span>
+            <span class="h-cl" style="width:71.267px;height:15.497px;opacity:.55"><img src="assets/img/home/st-juspay.svg" alt="Juspay" style="left:-39.68px;top:-48.62px;width:150.684px;height:112.661px"></span>
+          </div>
+        </article>
+        <article class="h-stage" data-fade-up="0.16">
+          <div class="h-stage__head"><span class="h-stage__num">03</span><div><p class="h-stage__name">Enterprise</p><p class="h-stage__range">New bets inside big companies</p></div></div>
+          <h3 class="h-stage__title">Big companies with<br>startup velocity.</h3>
+          <ul class="h-stage__list"><li>AI transformation</li><li>Product incubation</li><li>UX research and testing</li><li>Full-stack engineering</li></ul>
+          <div class="h-stage__clients">
+            <span class="h-cl" style="width:74.227px;height:14.879px;opacity:.55"><img src="assets/img/home/st-meta.svg" alt="Meta" style="left:-38.17px;top:-49.12px;width:151.285px;height:113.11px"></span>
+            <span class="h-cl" style="width:58.717px;height:19.196px;opacity:.6"><img src="assets/img/home/st-google.svg" alt="Google" style="left:0;top:0;width:100%;height:100%"></span>
+            <span class="h-cl" style="width:53.379px;height:15.934px;opacity:.42"><img src="assets/img/home/st-dell.svg" alt="Dell" style="left:-33.66px;top:-39.83px;width:127.871px;height:95.604px"></span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 6 · Founders in their words (Figma 5513:225112) -->
+    <section class="h-tq wrap" aria-label="Founders in their words" data-tq>
+      <div class="h-tq__head">
+        <h2 class="h-h2 h-tq__title" data-fade-up>Founders in their words</h2>
+        <div class="h-tq__arrows">
+          <button class="h-tq__arrow h-tq__arrow--prev" type="button" aria-label="Previous testimonial" data-tq-prev><img src="assets/img/home/tq-caret.svg" alt=""></button>
+          <button class="h-tq__arrow" type="button" aria-label="Next testimonial" data-tq-next><img src="assets/img/home/tq-caret.svg" alt=""></button>
+        </div>
+      </div>
+      <div class="splide h-tq__slider" aria-label="Testimonials" data-tq-slider>
+        <div class="splide__track">
+          <ul class="splide__list">
+            <li class="splide__slide h-tq__slide">
+              <img class="h-tq__art" src="assets/img/home/tq-slide-inhouse.png" alt="Ryan Wegner, Inhouse, and the Inhouse product">
+              <blockquote class="h-tq__quote">“Finding designers who have the talent and drive to match a founder's vision is rare, consider this a PSA! If you're building B2B SaaS, you want them on your shortlist.”</blockquote>
+              <div class="h-tq__who"><p><strong>Ryan Wegner</strong><span>Inhouse, CEO</span></p><a class="h-tq__in" href="https://www.linkedin.com/in/ryan-wenger-2122a0a/" target="_blank" rel="noopener" aria-label="Ryan Wegner on LinkedIn"><img src="assets/img/home/tq-linkedin.svg" alt=""></a></div>
+            </li>
+            <li class="splide__slide h-tq__slide">
+              <img class="h-tq__art" src="assets/img/home/tq-slide-lume.png" alt="Vicki Powell, Lume Health, and the Lume app">
+              <blockquote class="h-tq__quote">“Parallel was excellent in helping us bring our vision to life. The quick iterations done in parallel with user testing let us try a lot of things in order to get our beta. We’re so grateful for their team.”</blockquote>
+              <div class="h-tq__who"><p><strong>Vicki Powell</strong><span>Lume, Co-Founder &amp; CEO</span></p><a class="h-tq__in" href="https://www.linkedin.com/in/vicki-powell/" target="_blank" rel="noopener" aria-label="Vicki Powell on LinkedIn"><img src="assets/img/home/tq-linkedin.svg" alt=""></a></div>
+            </li>
+            <li class="splide__slide h-tq__slide">
+              <img class="h-tq__art" src="assets/img/home/tq-slide-urbanpiper.png" alt="Anirban Majumdar, UrbanPiper, and the UrbanPiper dashboard">
+              <blockquote class="h-tq__quote">“Parallel made it a point to understand the product and the impact they have or should have. They worked patiently with our in-house teams of Product, Design and Engineering, without the slightest hint of friction.”</blockquote>
+              <div class="h-tq__who"><p><strong>Anirban Majumdar</strong><span>Co-founder &amp; Co-CEO, UrbanPiper</span></p><a class="h-tq__in" href="https://www.linkedin.com/in/anirvan--majumdar/" target="_blank" rel="noopener" aria-label="Anirban Majumdar on LinkedIn"><img src="assets/img/home/tq-linkedin.svg" alt=""></a></div>
+            </li>
+            <li class="splide__slide h-tq__slide">
+              <img class="h-tq__art" src="assets/img/home/tq-slide-travelopia.png" alt="Parik, Enchanting Travels, and the Travelopia product">
+              <blockquote class="h-tq__quote h-tq__quote--long">“Having worked with designers and UX specialists all over the world, I can safely say that Parallel has an international quality benchmark for product design. They are able to understand complex business use cases and come up with intuitive design solutions.”</blockquote>
+              <div class="h-tq__who"><p><strong>Parik</strong><span>CEO, Enchanting Travels (A Travelopia Company)</span></p><a class="h-tq__in" href="https://www.linkedin.com/in/parik-laxminarayan-6a094/" target="_blank" rel="noopener" aria-label="Parik on LinkedIn"><img src="assets/img/home/tq-linkedin.svg" alt=""></a></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="h-tq__dots" role="tablist" aria-label="Choose testimonial" data-tq-dots></div>
+    </section>
+
+    <!-- 7 · Building is the easy bit (Figma 5513:229032) -->
+    <section class="h-easy wrap">
+      <h2 class="h-easy__title" data-fade-up>Building is the easy bit.</h2>
+      <p class="h-easy__body" data-scroll-reveal>Nailing ‘what to build’ and ‘how to build’ is the holy grail of making products win.<span class="dim"> We plug the missing piece of your team to help you go for gold.</span></p>
+      <a class="pill h-pill h-easy__cta" href="parallel/" data-fade-up="0.1">The Parallel way
+        <svg viewBox="0 0 20 20" fill="none"><path d="M5 15L15 5M6.875 5H15v8.125" stroke="currentColor" stroke-width=".9375" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </section>
+
+    <!-- 8 · Partner with Parallel (Figma 5513:229040) -->
+    <section class="h-partner wrap" id="book">
+      <div class="h-partner__copy">
+        <h2 class="h-h2" data-fade-up>Partner with Parallel</h2>
+        <p class="h-partner__lead" data-fade-up="0.08">Bring your product, your roadmap, your problem. We'll tell you what we'd do first.</p>
+      </div>
+      <div class="h-partner__cal" data-fade-up="0.12">
+        <img src="assets/img/home/cal.png" alt="Book a 30 minute intro with Robin Dhanwani: calendar for March 2026">
+      </div>
+    </section>
+
+    <!-- 9 · FAQs (Figma 5513:229045) -->
+    <section class="h-faq wrap" aria-label="FAQs">
+      <h2 class="h-h2" data-fade-up>FAQs</h2>
+      <div class="h-faq__list" data-faq>
+        <div class="h-faq__item is-open">
+          <h3><button class="h-faq__q" type="button" aria-expanded="true" aria-controls="faq-a1" id="faq-q1">What makes Parallel different from other design studios?<span class="h-faq__icon" aria-hidden="true"></span></button></h3>
+          <div class="h-faq__a" id="faq-a1" role="region" aria-labelledby="faq-q1"><p>The depth of thinking we bring to every project, and the quality of work that comes out of it.</p></div>
+        </div>
+        <div class="h-faq__item">
+          <h3><button class="h-faq__q" type="button" aria-expanded="false" aria-controls="faq-a2" id="faq-q2">Do you only work with startups?<span class="h-faq__icon" aria-hidden="true"></span></button></h3>
+          <div class="h-faq__a" id="faq-a2" role="region" aria-labelledby="faq-q2"><p>Not at all. While we often work with early-stage teams, we also collaborate with scale-ups and enterprise teams, especially when they’re launching new bets, rethinking existing experiences, or bringing AI into their product.</p></div>
+        </div>
+        <div class="h-faq__item">
+          <h3><button class="h-faq__q" type="button" aria-expanded="false" aria-controls="faq-a3" id="faq-q3">Is there a minimum time or budget commitment?<span class="h-faq__icon" aria-hidden="true"></span></button></h3>
+          <div class="h-faq__a" id="faq-a3" role="region" aria-labelledby="faq-q3"><p>We’re flexible, but we don’t do one-off tasks. Most projects start with a 4–6 week sprint and evolve from there. The best outcomes come from focused, collaborative work, not piecemeal execution.</p></div>
+        </div>
+        <div class="h-faq__item">
+          <h3><button class="h-faq__q" type="button" aria-expanded="false" aria-controls="faq-a4" id="faq-q4">Do you only work on full redesigns?<span class="h-faq__icon" aria-hidden="true"></span></button></h3>
+          <div class="h-faq__a" id="faq-a4" role="region" aria-labelledby="faq-q4"><p>No. We often work on specific flows, features, or experiments. That said, we always consider the bigger system so even small fixes ladder up to a stronger product.</p></div>
+        </div>
+        <div class="h-faq__item">
+          <h3><button class="h-faq__q" type="button" aria-expanded="false" aria-controls="faq-a5" id="faq-q5">How do you work with clients?<span class="h-faq__icon" aria-hidden="true"></span></button></h3>
+          <div class="h-faq__a" id="faq-a5" role="region" aria-labelledby="faq-q5"><p>We plug in like an extension of your team. That can mean owning a full product track, collaborating with in-house designers, or working directly with founders and PMs. We work in weekly cycles, share prototypes early, and prioritize clarity at every step.</p></div>
+        </div>
+        <div class="h-faq__item">
+          <h3><button class="h-faq__q" type="button" aria-expanded="false" aria-controls="faq-a6" id="faq-q6">Do you do branding or just product design?<span class="h-faq__icon" aria-hidden="true"></span></button></h3>
+          <div class="h-faq__a" id="faq-a6" role="region" aria-labelledby="faq-q6"><p>We do both, especially when brand and product need to evolve together. Our branding work is rooted in utility: it’s about helping teams stand out, stay consistent, and scale faster across product, pitch, and platform.</p></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
