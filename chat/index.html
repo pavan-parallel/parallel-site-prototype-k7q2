@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ask Parallel — chat prototype</title>
+<!--
+  ASK PARALLEL — chat UI prototype (for Aman)
+  ------------------------------------------------------------
+  Self-contained. Open in a browser. Use the "States" button (bottom-left)
+  to jump to every state; the same list doubles as the edge-case spec.
+
+  Fonts: Sentient (Fontshare) + Figtree (Google) — same as the site.
+  Images hotlink review.parallelhq.com; swap for your own asset paths.
+
+  The fake backend lives in `respond()`. Its return shape mirrors what the
+  current chat already renders (text / cases / links / follow-ups), plus
+  two optional additions: `clarify` and `contact`. See RESPONSE SHAPE below.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=sentient@400,401,500,700,701&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#111;
+  --ink-2:#222;
+  --grey:#6e6e73;
+  --grey-2:#a1a1a6;
+  --line:#e9e9eb;
+  --tag:#f1f1f2;
+  --off:#f7f9fd;
+  --serif:"Sentient", Georgia, "Times New Roman", serif;
+  --sans:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --col:720px;
+  --gutter:40px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink-2);background:#fff;-webkit-font-smoothing:antialiased;font-size:16px;line-height:24px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+
+/* ---------- Backdrop page (stand-in for the home hero) ---------- */
+.page{min-height:100vh;padding:0 var(--gutter)}
+.nav{max-width:1200px;margin:28px auto 0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-radius:100px;background:linear-gradient(#fafafa,#fff)}
+.logo{font-family:var(--sans);font-style:italic;font-weight:400;font-size:24px;letter-spacing:-.5px}
+.nav-links{display:flex;gap:40px;align-items:center;font-size:15px}
+.nav-links i{color:var(--grey-2)}
+.slash{display:inline-block;width:1.5px;height:20px;background:var(--ink);transform:skewX(-14deg)}
+.btn-dark{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:100px;padding:15px 22px;font-size:15px;font-weight:500;line-height:15px;transition:transform .3s var(--ease)}
+.btn-dark:hover{transform:translateY(-1px)}
+.hero{text-align:center;padding-top:120px}
+.hero h1{font-family:var(--serif);font-weight:400;font-size:64px;line-height:80px;letter-spacing:-1.92px;color:var(--ink-2)}
+.hero p{font-size:22px;line-height:32px;margin-top:20px}
+.hero-cards{display:flex;justify-content:center;gap:24px;margin-top:64px}
+.hero-cards img{width:200px;height:250px;object-fit:cover;border-radius:12px;background:var(--off)}
+
+/* ---------- The pill (closed state) / dock (open state) ---------- */
+.dock{
+  position:fixed;left:50%;bottom:24px;z-index:60;
+  width:400px;transform:translateX(-50%);
+  background:#fff;border-radius:32px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.06),0 8px 24px -6px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.04);
+  transition:width .7s var(--ease-out), box-shadow .4s var(--ease), bottom .7s var(--ease-out);
+  display:flex;align-items:flex-end;
+}
+.dock:focus-within{box-shadow:0 0 0 1px rgba(0,0,0,.14),0 12px 32px -8px rgba(0,0,0,.16)}
+body.open .dock{width:min(var(--col), calc(100vw - 32px));bottom:28px}
+.dock textarea{
+  flex:1;resize:none;border:0;outline:0;background:transparent;
+  font:500 16px/24px var(--sans);color:var(--ink-2);
+  padding:20px 0 20px 28px;max-height:144px;overflow-y:auto;
+}
+.dock textarea::placeholder{color:var(--grey-2);font-weight:400}
+.dock .ph{position:absolute;left:28px;top:20px;pointer-events:none;color:var(--grey);font-size:16px;white-space:nowrap;overflow:hidden;max-width:calc(100% - 90px)}
+.dock .ph::after{content:"";display:inline-block;width:1px;height:18px;background:var(--grey);margin-left:2px;vertical-align:-3px;animation:caret 1s steps(1) infinite}
+body.open .dock .ph,.dock.has-text .ph,.dock.focus .ph{display:none}
+@keyframes caret{50%{opacity:0}}
+.dock-actions{display:flex;align-items:center;gap:6px;padding:12px 12px 12px 8px}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;transition:background .25s var(--ease),transform .25s var(--ease),opacity .25s}
+.icon-btn svg{width:18px;height:18px}
+.send{background:var(--ink);color:#fff}
+.send:disabled{background:var(--tag);color:var(--grey-2);cursor:default}
+.send:not(:disabled):hover{transform:scale(1.06)}
+.search-ic{color:var(--ink)}
+body.open .search-ic{display:none}
+body:not(.open) .send{display:none}
+.stop{background:var(--ink);color:#fff;display:none}
+.stop span{width:10px;height:10px;border-radius:2px;background:#fff}
+.dock.busy .send{display:none}
+.dock.busy .stop{display:grid}
+.counter{font-size:13px;color:var(--grey);padding-right:4px;display:none;font-variant-numeric:tabular-nums}
+.counter.show{display:block}
+.counter.over{color:#c2410c}
+.dock.locked{opacity:.6}
+.dock.locked textarea{cursor:not-allowed}
+.resume-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:#2f6bff;display:none}
+body:not(.open) .dock.has-history .resume-dot{display:block}
+
+/* ---------- Overlay ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:50;background:#fff;
+  opacity:0;visibility:hidden;transition:opacity .45s var(--ease),visibility 0s .45s;
+}
+body.open .overlay{opacity:1;visibility:visible;transition:opacity .45s var(--ease)}
+.bar{position:absolute;top:0;left:0;right:0;height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 var(--gutter);z-index:3;background:linear-gradient(#fff 60%,rgba(255,255,255,0))}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:var(--ink)}
+.bar-right{display:flex;align-items:center;gap:8px}
+.ghost{font-size:15px;font-weight:500;padding:10px 16px;border-radius:100px;color:var(--ink);transition:background .2s}
+.ghost:hover{background:var(--tag)}
+.ghost[hidden]{display:none}
+.close{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;transition:background .2s}
+.close:hover{background:var(--tag)}
+.scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;padding:96px var(--gutter) 0;scroll-behavior:smooth}
+.col{max-width:var(--col);margin:0 auto}
+.fade-bottom{position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(rgba(255,255,255,0),#fff 70%);pointer-events:none;z-index:2}
+
+/* Parallel's two-slash mark, reused as the assistant's mark + thinking state */
+.mark{display:inline-flex;gap:5px;align-items:center;height:18px}
+.mark i{display:block;width:1.5px;height:16px;background:currentColor;transform:skewX(-16deg);border-radius:1px}
+
+/* ---------- Empty state ---------- */
+.empty{padding-top:min(7vh,72px);padding-bottom:200px}
+.empty h1{font-family:var(--serif);font-weight:400;font-size:48px;line-height:56px;letter-spacing:-1.2px;color:var(--ink)}
+.empty h1 span{display:block;color:var(--grey-2)}
+.starters{margin-top:40px}
+.starter{width:100%;display:grid;grid-template-columns:96px 1fr 20px;align-items:center;text-align:left;padding:16px 0;border-top:1px solid var(--line);font-size:18px;line-height:26px;color:var(--ink-2)}
+.starter:last-child{border-bottom:1px solid var(--line)}
+.starter small{font-size:14px;color:var(--grey);font-weight:500}
+.starter .arr{opacity:0;transform:translateX(-6px);transition:all .3s var(--ease)}
+.starter:hover .arr,.starter:focus-visible .arr{opacity:1;transform:none}
+.starter q{quotes:none;transition:transform .35s var(--ease)}
+.starter:hover q{transform:translateX(4px)}
+.recent{margin-top:44px}
+.label{font-size:14px;font-weight:500;color:var(--grey);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.thumbs{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 calc(var(--gutter) * -1);padding:0 var(--gutter)}
+.thumbs::-webkit-scrollbar{display:none}
+.thumb{flex:0 0 132px;text-align:left}
+.thumb .im{aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:var(--off)}
+.thumb img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}
+.thumb:hover img{transform:scale(1.05)}
+.thumb span{display:block;font-size:14px;margin-top:8px;color:var(--ink-2);font-weight:500}
+
+/* ---------- Turns ---------- */
+.turn{padding-bottom:96px}
+.turn:last-child{min-height:calc(100dvh - 96px);padding-bottom:200px}
+.q{font-family:var(--serif);font-weight:400;font-size:44px;line-height:52px;letter-spacing:-1.1px;color:var(--ink);overflow-wrap:anywhere}
+.q.mid{font-size:34px;line-height:42px;letter-spacing:-.7px}
+.q.long{font-size:26px;line-height:34px;letter-spacing:-.4px}
+.w{display:inline-block;opacity:0;filter:blur(8px);transform:translateY(8px);animation:wordIn .6s var(--ease-out) forwards}
+@keyframes wordIn{to{opacity:1;filter:none;transform:none}}
+.turn.done .q .w{animation:none;opacity:1;filter:none;transform:none}
+
+.thinking{display:flex;align-items:center;gap:12px;margin-top:28px;height:24px;color:var(--ink)}
+.thinking .mark i{animation:par 1.1s var(--ease) infinite}
+.thinking .mark i:nth-child(2){animation-delay:.14s}
+@keyframes par{0%,100%{transform:skewX(-16deg) translateY(0)}40%{transform:skewX(-16deg) translateY(-4px);opacity:.35}}
+.status{font-size:15px;font-weight:500;position:relative;
+  background:linear-gradient(90deg,var(--grey-2) 0%,var(--grey-2) 40%,var(--ink) 50%,var(--grey-2) 60%,var(--grey-2) 100%);
+  background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 2.2s linear infinite;transition:opacity .25s}
+.status.swap{opacity:0}
+@keyframes shine{from{background-position:100% 0}to{background-position:0 0}}
+
+.answer{margin-top:28px;font-size:19px;line-height:30px;color:var(--ink-2);max-width:640px}
+.answer p+p{margin-top:16px}
+.answer strong{font-weight:600;color:var(--ink)}
+.aw{opacity:0;filter:blur(4px);animation:wordIn .4s var(--ease-out) forwards}
+.turn.done .aw{animation:none;opacity:1;filter:none}
+.cursor{display:inline-block;width:2px;height:20px;background:var(--ink);margin-left:2px;vertical-align:-4px;animation:caret .9s steps(1) infinite}
+
+.note{display:flex;align-items:center;gap:12px;margin-top:20px;font-size:15px;color:var(--grey)}
+.note .pill{background:var(--tag);color:#3d3d3d;border-radius:8px;padding:3px 10px;font-weight:500;font-size:14px}
+.link-btn{font-weight:500;color:var(--ink);border-bottom:1px solid currentColor;padding-bottom:1px;line-height:18px}
+
+/* reveal for blocks after the text */
+.rv{opacity:0;transform:translateY(16px);filter:blur(6px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out),filter .7s var(--ease-out)}
+.rv.in{opacity:1;transform:none;filter:none}
+
+/* ---------- Case cards ---------- */
+.cases{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px 24px}
+.case{display:block}
+.case .im{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--off)}
+.case img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease-out)}
+.case:hover img{transform:scale(1.04)}
+.case .tag{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);color:#3d3d3d;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:500;line-height:20px}
+.case h3{font-family:var(--serif);font-weight:400;font-size:24px;line-height:30px;letter-spacing:-.48px;color:var(--ink);margin-top:16px;display:flex;align-items:center;gap:8px}
+.case h3 .go{opacity:0;transform:translate(-4px,4px);transition:all .35s var(--ease);font-family:var(--sans);font-size:18px}
+.case:hover h3 .go{opacity:1;transform:none}
+.case p{font-size:16px;line-height:24px;color:var(--grey);margin-top:6px}
+/* image failed / missing → typographic fallback, not a grey box */
+.case .im.fallback{display:flex;align-items:flex-end;padding:20px;background:var(--off)}
+.case .im.fallback b{font-family:var(--serif);font-weight:400;font-size:40px;line-height:44px;letter-spacing:-1px;color:var(--ink)}
+/* one case → feature layout, same pattern as the home page's case rows */
+.cases.one{grid-template-columns:1fr}
+.cases.one .im{aspect-ratio:16/9}
+.cases.one .meta{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-top:20px}
+.cases.one h3{margin-top:0;font-size:28px;line-height:35px}
+.cases.one p{font-size:18px;line-height:26px;color:var(--ink-2);max-width:440px;margin-top:8px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0}
+.tags span{background:var(--tag);color:#3d3d3d;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:500;line-height:20px;white-space:nowrap}
+.cases.one .tag{display:none}
+/* three → first spans both columns */
+.cases.three .case:first-child{grid-column:1/-1}
+.cases.three .case:first-child .im{aspect-ratio:16/8}
+.more{margin-top:28px;font-size:15px;font-weight:500;padding:10px 18px;border-radius:100px;background:var(--tag);color:var(--ink);transition:background .2s}
+.more:hover{background:#e7e7e9}
+.skel .im{background:linear-gradient(100deg,var(--off) 40%,#eef2fa 50%,var(--off) 60%);background-size:200% 100%;animation:sk 1.4s linear infinite}
+.skel .l1,.skel .l2{height:14px;border-radius:6px;background:var(--off);margin-top:16px;width:40%}
+.skel .l2{margin-top:10px;width:75%}
+@keyframes sk{from{background-position:100% 0}to{background-position:-100% 0}}
+
+/* ---------- Read more links ---------- */
+.reads{margin-top:48px}
+.read{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid var(--line);font-size:16px;color:var(--ink-2)}
+.read:last-child{border-bottom:1px solid var(--line)}
+.read small{color:var(--grey);font-size:14px;margin-right:12px}
+.read:hover .t{text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- Go deeper ---------- */
+.deeper{margin-top:56px}
+.deep{display:flex;gap:12px;align-items:baseline;text-align:left;width:100%;padding:6px 0;font-family:var(--serif);font-size:22px;line-height:30px;letter-spacing:-.3px;color:var(--grey);transition:color .25s var(--ease)}
+.deep:hover,.deep:focus-visible{color:var(--ink)}
+.deep .hook{font-family:var(--sans);font-size:18px;color:var(--grey);transition:transform .3s var(--ease)}
+.deep:hover .hook{transform:translateX(3px);color:var(--ink)}
+.deep:disabled{cursor:default;color:var(--line)}
+
+/* ---------- Clarify card ---------- */
+.clarify{margin-top:32px;max-width:520px;border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff}
+.clarify h4{font-family:var(--serif);font-weight:400;font-size:22px;line-height:30px;color:var(--ink);letter-spacing:-.3px;margin-bottom:16px}
+.opt{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;padding:12px 14px;border-radius:10px;font-size:16px;transition:background .2s}
+.opt:hover,.opt:focus-visible,.opt.picked{background:var(--off)}
+.opt kbd{font:500 12px var(--sans);color:var(--grey);border:1px solid var(--line);border-radius:6px;width:22px;height:22px;display:grid;place-items:center}
+.opt.own input{flex:1;border:0;outline:0;font:inherit;background:transparent}
+.clarify .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.clarify .skip{font-size:14px;font-weight:500;color:var(--grey);padding:8px 2px}
+.clarify .skip:hover{color:var(--ink)}
+.clarify.answered{opacity:.5;pointer-events:none}
+
+/* ---------- Contact card ---------- */
+.contact{margin-top:40px;background:var(--ink);color:#fff;border-radius:20px;padding:36px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
+.contact h4{font-family:var(--serif);font-weight:400;font-size:32px;line-height:38px;letter-spacing:-.8px}
+.contact h4 span{display:block;color:#8a8a8f}
+.contact .acts{display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0}
+.btn-light{background:#fff;color:var(--ink);border-radius:100px;padding:15px 22px;font-size:15px;font-weight:500;line-height:15px;transition:transform .3s var(--ease)}
+.btn-light:hover{transform:translateY(-1px)}
+.copy{font-size:14px;color:#b5b5ba}
+.copy:hover{color:#fff}
+
+/* ---------- Errors ---------- */
+.err{margin-top:28px;display:flex;align-items:center;gap:16px;font-size:16px;color:var(--ink-2)}
+.err .dot{width:8px;height:8px;border-radius:50%;background:#e5484d;flex-shrink:0}
+.err.warn .dot{background:#f5a524}
+
+/* ---------- Jump to latest ---------- */
+.jump{position:fixed;left:50%;bottom:112px;transform:translate(-50%,8px);z-index:61;width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 6px 16px -4px rgba(0,0,0,.15);display:grid;place-items:center;opacity:0;pointer-events:none;transition:all .3s var(--ease)}
+.jump.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+
+.toast{position:fixed;left:50%;top:24px;transform:translate(-50%,-12px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:100px;font-size:14px;opacity:0;transition:all .3s var(--ease);z-index:90;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Dev panel (prototype only — not for production) ---------- */
+.dev{position:fixed;left:16px;bottom:16px;z-index:100;font-size:13px}
+.dev-toggle{background:#fff;border:1px dashed #b9b9be;border-radius:100px;padding:8px 14px;font-weight:600;color:#555}
+.dev-panel{position:absolute;left:0;bottom:44px;width:320px;max-height:70vh;overflow:auto;background:#fff;border:1px dashed #b9b9be;border-radius:14px;padding:12px;display:none;box-shadow:0 12px 32px -8px rgba(0,0,0,.18)}
+.dev.open .dev-panel{display:block}
+.dev-panel p.h{font-weight:600;color:#555;margin:4px 6px 8px}
+.dev-panel button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:8px;line-height:17px}
+.dev-panel button:hover{background:var(--off)}
+.dev-panel button b{display:block;font-weight:600;color:var(--ink)}
+.dev-panel button span{color:var(--grey);font-size:12px}
+
+/* ---------- Mobile ---------- */
+@media (max-width:720px){
+  :root{--gutter:16px}
+  .nav-links{display:none}
+  .hero{padding-top:72px}
+  .hero h1{font-size:36px;line-height:44px;letter-spacing:-1px}
+  .hero p{font-size:17px;line-height:26px}
+  .hero-cards img{width:120px;height:160px}
+  .hero-cards img:nth-child(n+3){display:none}
+  .dock{width:calc(100vw - 32px);bottom:calc(16px + env(safe-area-inset-bottom))}
+  body.open .dock{width:calc(100vw - 24px);bottom:calc(12px + env(safe-area-inset-bottom))}
+  .dock textarea{padding:16px 0 16px 20px;font-size:16px}
+  .dock .ph{left:20px;top:16px}
+  .dock-actions{padding:8px 8px 8px 6px}
+  .bar{height:64px}
+  .scroll{padding-top:72px}
+  .empty{padding-top:24px}
+  .empty h1{font-size:30px;line-height:36px;letter-spacing:-.7px}
+  .starters{margin-top:28px}
+  .recent{margin-top:32px}
+  .starter{grid-template-columns:1fr 20px;font-size:17px;padding:14px 0}
+  .starter small{display:none}
+  .starter .arr{opacity:1;transform:none}
+  .q{font-size:30px;line-height:36px;letter-spacing:-.6px}
+  .q.mid{font-size:26px;line-height:32px}
+  .q.long{font-size:21px;line-height:28px;letter-spacing:-.2px}
+  .answer{font-size:17px;line-height:27px}
+  /* 2+ cases become a swipe row so answers don't turn into a long scroll */
+  .cases:not(.one){display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-left:calc(var(--gutter) * -1);margin-right:calc(var(--gutter) * -1);padding:0 var(--gutter);scrollbar-width:none}
+  .cases::-webkit-scrollbar{display:none}
+  .cases:not(.one) .case{flex:0 0 82%;scroll-snap-align:start;scroll-margin-left:var(--gutter)}
+  .cases.three .case:first-child .im{aspect-ratio:4/3}
+  .cases.one .meta{flex-direction:column}
+  .tags{justify-content:flex-start}
+  .case h3 .go{opacity:1;transform:none}
+  .deep{font-size:19px;line-height:26px;padding:8px 0}
+  .opt kbd{display:none}
+  .contact{flex-direction:column;align-items:flex-start;padding:28px}
+  .contact h4{font-size:26px;line-height:32px}
+  .contact .acts{align-items:flex-start}
+  .jump{bottom:96px}
+  .dev{left:auto;right:12px;top:12px;bottom:auto}
+  .dev-panel{bottom:auto;top:44px;left:auto;right:0;width:280px}
+  body.open .dev{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .status{color:var(--grey);background:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Backdrop: rough stand-in for the home hero so the open/close transition reads in context -->
+<div class="page" aria-hidden="false">
+  <nav class="nav">
+    <span class="logo">parallel</span>
+    <div class="nav-links"><i class="slash"></i><span>We</span><span>Work</span><i>in</i><span>Parallel</span><i class="slash"></i></div>
+    <a class="btn-dark" href="#">Let’s talk</a>
+  </nav>
+  <section class="hero">
+    <h1>Your forward deployed<br>design and engineering team</h1>
+    <p>Products, brands, and websites from launch to scale.</p>
+    <div class="hero-cards" id="heroCards"></div>
+  </section>
+</div>
+
+<!-- Chat overlay -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Ask Parallel">
+  <div class="bar">
+    <div class="brand"><span class="mark"><i></i><i></i></span>Ask Parallel</div>
+    <div class="bar-right">
+      <button class="ghost" id="newChat" hidden>New chat</button>
+      <button class="close" id="closeBtn" aria-label="Close chat (Esc)">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l12 12M15 3L3 15"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="scroll" id="scroll">
+    <div class="col" id="thread" aria-live="polite"></div>
+  </div>
+  <div class="fade-bottom"></div>
+</div>
+
+<button class="jump" id="jump" aria-label="Jump to latest">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v11M3 8.5l5 5 5-5"/></svg>
+</button>
+
+<form class="dock" id="dock" autocomplete="off">
+  <span class="ph" id="ph"></span>
+  <textarea id="input" rows="1" maxlength="600" aria-label="Ask Parallel anything"></textarea>
+  <div class="dock-actions">
+    <span class="counter" id="counter"></span>
+    <span class="icon-btn search-ic" aria-hidden="true">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"/><path d="M12 12l4 4"/></svg>
+    </span>
+    <button class="icon-btn send" id="send" type="submit" aria-label="Send" disabled>
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 15V3M4 8l5-5 5 5"/></svg>
+    </button>
+    <button class="icon-btn stop" id="stop" type="button" aria-label="Stop generating"><span></span></button>
+  </div>
+  <span class="resume-dot" title="Chat in progress"></span>
+</form>
+
+<div class="toast" id="toast"></div>
+
+<!-- Prototype-only: state jumper + edge-case spec -->
+<div class="dev" id="dev">
+  <div class="dev-panel" id="devPanel"></div>
+  <button class="dev-toggle" id="devToggle">States ▴</button>
+</div>
+
+<script>
+/* =========================================================
+   DATA — case studies (titles/copy pulled from review site)
+   ========================================================= */
+const A = 'https://review.parallelhq.com';
+const CASES = {
+  healthify:{title:'Healthify',desc:'Redesigning an AI health platform for a successful US launch',tag:'AI Health',tags:['User Research','AI Design Sprint'],img:A+'/home-nov/hero/healthify.avif',href:A+'/work/healthify-parallel'},
+  pageloop:{title:'Pageloop',desc:'Building the AI-native content ops layer for SaaS',tag:'B2B SaaS',tags:['UX Design','UI Design'],img:A+'/work/index/vimeo-1102101572-poster.jpg',href:A+'/work/pageloop-parallel'},
+  inhouse:{title:'InHouse AI',desc:'Simplifying legal workflows for small businesses with AI',tag:'AI SaaS',tags:['Product Design','Brand'],img:A+'/home-nov/hero/inhouse.avif',href:A+'/work/inhouse'},
+  meta:{title:'Meta',desc:'Establishing trust, transparency, and control in an AI-native world',tag:'AI Research',tags:['Research','Concepts'],img:A+'/home-nov/hero/meta.avif',href:A+'/work/meta-2026-l-parallel'},
+  lume:{title:'Lume Health',desc:'Improving wellness by reconnecting users with their circadian rhythm',tag:'Health',tags:['Product Design'],img:A+'/home-nov/hero/lume-health.avif',href:A+'/work/lume-health'},
+  anthriq:{title:'Anthriq',desc:'Repositioning a deep-tech biosignal company for the enterprise market',tag:'Deep Tech',tags:['Naming','Brand','Website'],img:A+'/home-nov/hero/anthriq.avif',href:A+'/work/anthriq'},
+  jiva:{title:'JIVA',desc:'Making the Indian Judiciary more efficient with AI',tag:'GovTech',tags:['Product Design'],img:A+'/work/index/jiva-poster.jpg',href:A+'/work/jiva'},
+  pixxel:{title:'Pixxel',desc:'Launching a space-tech website in 10 days, then redesigning it as the company grew',tag:'Space Tech',tags:['Website'],img:null,href:A+'/work/pixxel'}, // img:null on purpose → shows the fallback card
+};
+const STARTERS = [
+  ['Work','Show me your AI work'],
+  ['Fit','Have you worked with early-stage startups?'],
+  ['Process','How long does a typical project take?'],
+  ['Budget','What does a project cost?'],
+];
+const PLACEHOLDERS = ['Have you worked with early-stage startups?','How long does a typical project take?','Show me your AI work','What does a project cost?'];
+const MAX = 500, WARN = 400;
+
+/* =========================================================
+   RESPONSE SHAPE (what the backend should return)
+   {
+     status:   ['Searching case studies', ...]   // optional thinking steps
+     text:     'Markdown-lite. **bold** + blank line = new paragraph',
+     cases:    ['healthify','lume']               // 0 = none, 1 = feature, 2 = grid, 3 = 1 wide + 2, 4+ = grid of 4 + "Show n more"
+     links:    [{label:'AI Native', kind:'Page', href:'...'}],
+     followups:['...', '...', '...'],            // max 3
+     clarify:  {q:'...', options:['...']},         // optional; replaces followups
+     contact:  true                                // optional; dark "Let's talk" card
+   }
+   ========================================================= */
+function respond(q){
+  const s = q.toLowerCase();
+  const caseKey = Object.keys(CASES).find(k => s.includes(CASES[k].title.toLowerCase()) || s.includes(k));
+  if (s.includes('__error')) return {error:'network'};
+  if (s.includes('__offline')) return {error:'offline'};
+  if (s.includes('__rate')) return {error:'rate'};
+  if (/weather|joke|recipe|poem|cricket|movie/.test(s)) return {
+    status:['Reading your question'],
+    text:"That one's outside what I know. I can only speak to Parallel: our work, how we run projects, and whether we're a fit for what you're building.",
+    followups:['Show me your AI work','What kind of companies do you work with?','How do I start a project?']};
+  if (/cost|price|pricing|budget|rate|charge/.test(s)) return {
+    status:['Reading your question','Checking how we scope projects'],
+    text:"It depends on what you're building. Most projects are scoped as a fixed team for a fixed number of weeks, so the shape of the work drives the number.",
+    clarify:{q:'What are you looking to build?',options:['A new product, from zero','A redesign of an existing product','A brand and website','An AI feature inside an existing product','Not sure yet']}};
+  if (/fintech|crypto|bank|payments?|insurance/.test(s)) return {
+    status:['Searching case studies','No exact match. Finding the closest work'],
+    text:"We haven't published fintech work yet, so I won't pretend otherwise. The closest is work where **trust and complex workflows** were the whole problem, which is most of what fintech design is.",
+    cases:['inhouse','meta'], contact:true,
+    followups:['How do you handle regulated industries?','Show me your AI work']};
+  if (/talk|contact|hire|call|email|book|start a project/.test(s)) return {
+    status:['Getting the right person'],
+    text:"The quickest way is a 30-minute call. Tell us what you're building and we'll tell you honestly whether we're the right team.",
+    contact:true};
+  if (caseKey) { const c = CASES[caseKey]; return {
+    status:['Opening the '+c.title+' case study'],
+    text:`**${c.title}.** ${c.desc}. A small senior team worked inside their product team, shipping alongside engineering rather than handing over files.`,
+    cases:[caseKey],
+    followups:['What did the team look like?','How long did it take?','Show me similar work']}; }
+  if (/health|wellness|medical/.test(s)) return {
+    status:['Searching case studies','Picking the closest work'],
+    text:"Two health products, both AI-led. Healthify needed to win new users in the US; Lume needed people to actually feel a change in their sleep and energy.",
+    cases:['healthify','lume'],
+    followups:['Tell me about Healthify','How do you research with real users?']};
+  if (/brand|website|identity|name/.test(s)) return {
+    status:['Searching case studies','Picking the closest work'],
+    text:"Brand and website work, usually for companies whose story has outgrown their product.",
+    cases:['anthriq','pixxel','pageloop'],
+    followups:['Tell me about Anthriq','How fast can you ship a website?']};
+  if (/how long|timeline|weeks|process|typical project/.test(s)) return {
+    status:['Reading your question','Checking how we run projects'],
+    text:"Most projects run **6 to 12 weeks**. A focused sprint, like a new website or an AI concept, can land in 2 to 4.\n\nWe work in parallel with your team rather than in phases: research, design and build overlap, so you see working software early instead of a big reveal at the end.",
+    links:[{label:'How we work in Parallel',kind:'Page',href:A+'/parallel'},{label:'Engagement models',kind:'Page',href:A+'/parallel'}],
+    followups:['What does a project cost?','Who would be on my team?','Have you worked with early-stage startups?']};
+  if (/startup|early|seed|series/.test(s)) return {
+    status:['Searching case studies'],
+    text:"Yes, a lot of our work is seed to Series A. Small teams with a high bar: first product, first brand, first real website.",
+    cases:['pageloop','inhouse','lume'],
+    followups:['How long does a typical project take?','What does a project cost?']};
+  if (/\bai\b|artificial|llm|agent/.test(s) || s.includes('slow')) return {
+    status:['Searching 40+ case studies','Picking the strongest AI work','Writing it up'],
+    text:"AI-native work across health, SaaS, legal and research. The common thread is designing for **trust**: people need to understand what the AI did and stay in control of what ships.",
+    cases:['pageloop','inhouse','healthify','meta','jiva','lume'],
+    links:[{label:'AI Native',kind:'Page',href:A+'/ai-native'},{label:'AI software design that feels human',kind:'Article',href:A+'/blog'}],
+    followups:['Tell me about Pageloop','How do you design for AI trust?','How long does a typical project take?']};
+  return {
+    status:['Reading your question'],
+    text:"Good question. I don't have a confident answer to that one, and I'd rather not guess. Someone from the team can answer it properly.",
+    contact:true, followups:['Show me your AI work','How long does a typical project take?']};
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const body = document.body, dock = $('#dock'), input = $('#input'), thread = $('#thread'), scroller = $('#scroll');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let history = [];          // [{q, r}] — persisted to sessionStorage
+let run = null;            // current generation {stopped}
+let lockedUntil = 0;
+
+const sleep = (ms, r) => new Promise((res, rej) => {
+  const t = setTimeout(() => (r && r.stopped) ? rej('stopped') : res(), reduce ? Math.min(ms, 30) : ms);
+  if (r) r.cancel = () => { clearTimeout(t); rej('stopped'); };
+});
+const esc = t => t.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2200); }
+function save(){ try { sessionStorage.setItem('ask-parallel', JSON.stringify(history)); } catch(e){} }
+function load(){ try { return JSON.parse(sessionStorage.getItem('ask-parallel') || '[]'); } catch(e){ return []; } }
+
+/* =========================================================
+   OPEN / CLOSE
+   ========================================================= */
+function openChat(){
+  if (body.classList.contains('open')) return;
+  body.classList.add('open');
+  if (!thread.children.length) history.length ? restore() : renderEmpty();
+  setTimeout(() => input.focus(), 50);
+}
+function closeChat(){
+  body.classList.remove('open');
+  input.blur();
+  dock.classList.toggle('has-history', history.length > 0);
+}
+input.addEventListener('focus', () => { dock.classList.add('focus'); openChat(); });
+input.addEventListener('blur', () => dock.classList.remove('focus'));
+$('#closeBtn').onclick = closeChat;
+$('#newChat').onclick = () => { stopRun(); history = []; save(); thread.innerHTML = ''; renderEmpty(); input.focus(); };
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && body.classList.contains('open')) { e.preventDefault(); closeChat(); }
+  if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && !body.classList.contains('open') && document.activeElement.tagName !== 'INPUT' && document.activeElement !== input) { e.preventDefault(); input.focus(); }
+  // number keys pick a clarify option when the input is empty
+  if (/^[1-9]$/.test(e.key) && body.classList.contains('open') && !input.value) {
+    const c = thread.querySelector('.clarify:not(.answered)');
+    const opt = c && c.querySelectorAll('.opt')[+e.key - 1];
+    if (opt) { e.preventDefault(); opt.click(); }
+  }
+});
+
+/* typewriter placeholder on the closed pill */
+(function typer(){
+  const ph = $('#ph'); let i = 0;
+  async function loop(){
+    while (true){
+      const t = PLACEHOLDERS[i++ % PLACEHOLDERS.length];
+      for (let n = 1; n <= t.length; n++){ ph.textContent = t.slice(0, n); await new Promise(r => setTimeout(r, 38)); }
+      await new Promise(r => setTimeout(r, 2200));
+      for (let n = t.length; n >= 0; n--){ ph.textContent = t.slice(0, n); await new Promise(r => setTimeout(r, 14)); }
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+  reduce ? (ph.textContent = PLACEHOLDERS[0]) : loop();
+})();
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+function syncInput(){
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 144) + 'px';
+  const len = input.value.length, trimmed = input.value.trim();
+  dock.classList.toggle('has-text', len > 0);
+  $('#send').disabled = !trimmed || len > MAX || Date.now() < lockedUntil;
+  const c = $('#counter');
+  c.classList.toggle('show', len >= WARN);
+  c.classList.toggle('over', len > MAX);
+  c.textContent = len > MAX ? `${MAX - len}` : `${MAX - len}`;
+}
+input.addEventListener('input', syncInput);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); dock.requestSubmit(); }
+});
+dock.addEventListener('submit', e => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q || q.length > MAX) return;
+  if (run) { toast('Wait for this answer, or press stop'); return; }
+  if (Date.now() < lockedUntil) return;
+  input.value = ''; syncInput();
+  ask(q);
+});
+$('#stop').onclick = stopRun;
+function stopRun(){ if (run){ run.stopped = true; run.cancel && run.cancel(); } }
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+function renderEmpty(){
+  $('#newChat').hidden = true;
+  const e = el('div', 'empty');
+  e.innerHTML = `
+    <h1 class="rv">Ask us anything.<span>Our work, how we run projects, or whether we’re a fit.</span></h1>
+    <div class="starters rv">${STARTERS.map(([k, q]) => `
+      <button class="starter" data-q="${esc(q)}"><small>${k}</small><q>${esc(q)}</q><span class="arr">→</span></button>`).join('')}
+    </div>
+    <div class="recent rv">
+      <div class="label">Recent work</div>
+      <div class="thumbs">${['healthify','meta','anthriq','inhouse','lume','pageloop'].map(k => `
+        <button class="thumb" data-q="Tell me about ${esc(CASES[k].title)}"><div class="im"><img src="${CASES[k].img}" alt="" loading="lazy" onerror="this.remove()"></div><span>${CASES[k].title}</span></button>`).join('')}
+      </div>
+    </div>`;
+  thread.appendChild(e);
+  e.querySelectorAll('[data-q]').forEach(b => b.onclick = () => ask(b.dataset.q));
+  reveal(e.querySelectorAll('.rv'), 90);
+}
+function reveal(nodes, gap = 110){
+  [...nodes].forEach((n, i) => setTimeout(() => n.classList.add('in'), reduce ? 0 : 60 + i * gap));
+}
+
+/* =========================================================
+   A TURN
+   ========================================================= */
+function splitWords(text, cls){
+  return text.split(/(\s+)/).map((w, i) => /\s+/.test(w) ? w : `<span class="${cls}" style="animation-delay:${Math.min(i * 22, 500)}ms">${esc(w)}</span>`).join('');
+}
+function qSize(q){ return q.length > 110 ? 'long' : q.length > 55 ? 'mid' : ''; }
+
+function newTurn(q){
+  const empty = thread.querySelector('.empty');
+  if (empty) empty.remove();
+  $('#newChat').hidden = false;
+  const t = el('section', 'turn');
+  t.innerHTML = `<h2 class="q ${qSize(q)}">${splitWords(q, 'w')}</h2>`;
+  thread.appendChild(t);
+  // pin the new question near the top, like a fresh page
+  requestAnimationFrame(() => scroller.scrollTo({top: t.offsetTop - 24, behavior: reduce ? 'auto' : 'smooth'}));
+  return t;
+}
+
+async function ask(q, opts){
+  opts = opts || {};
+  openChat();
+  if (run) return;
+  const t = newTurn(q);
+  const r = respond(q);
+  run = {stopped:false};
+  const me = run;
+  dock.classList.add('busy');
+  try {
+    // ---- thinking
+    const think = el('div', 'thinking', `<span class="mark"><i></i><i></i></span><span class="status"></span>`);
+    t.appendChild(think);
+    const status = think.querySelector('.status');
+    await sleep(500, me);                                   // no label for the first beat — avoids a flash on fast answers
+    if (r.error === 'offline' || (!navigator.onLine && !r.error)) { think.remove(); return showError(t, 'offline', q); }
+    const steps = r.status || ['Thinking'];
+    const slow = q.toLowerCase().includes('slow');
+    for (let i = 0; i < steps.length; i++){
+      status.classList.add('swap'); await sleep(180, me);
+      status.textContent = steps[i]; status.classList.remove('swap');
+      await sleep(slow ? 2600 : 900, me);
+    }
+    if (slow){
+      status.classList.add('swap'); await sleep(180, me);
+      status.textContent = 'Taking a little longer than usual'; status.classList.remove('swap');
+      await sleep(3500, me);
+    }
+    if (r.error){ think.remove(); return showError(t, r.error, q); }
+    think.remove();
+
+    // ---- skeletons while cases "load" (only if cases are coming)
+    // ---- stream text
+    const ans = el('div', 'answer'); t.appendChild(ans);
+    await streamText(ans, r.text, me, opts.stopAfter);
+
+    // ---- blocks
+    if (r.clarify){ const c = renderClarify(r.clarify, q); t.appendChild(c); reveal([c]); }
+    if (r.cases && r.cases.length){ const skel = renderSkeleton(Math.min(r.cases.length, r.cases.length === 1 ? 1 : 2)); t.appendChild(skel); await sleep(450, me); skel.remove(); const c = renderCases(r.cases); t.appendChild(c); reveal(c.querySelectorAll('.rv'), 120); await sleep(200, me); }
+    if (r.links && r.links.length){ const l = renderLinks(r.links); t.appendChild(l); reveal([l]); }
+    if (r.contact){ const c = renderContact(); t.appendChild(c); reveal([c]); }
+    if (r.followups && r.followups.length && !r.clarify){ await sleep(200, me); const f = renderDeeper(r.followups); t.appendChild(f); reveal(f.querySelectorAll('.rv'), 80); }
+    history.push({q, r}); save();
+  } catch(e){
+    if (e !== 'stopped') throw e;
+    t.querySelector('.thinking')?.remove();
+    t.querySelector('.cursor')?.remove();
+    t.querySelectorAll('.skel').forEach(s => s.remove());
+    const n = el('div', 'note rv', `<span class="pill">Stopped</span><button class="link-btn">Regenerate</button>`);
+    t.appendChild(n); reveal([n]);
+    n.querySelector('button').onclick = () => { t.remove(); ask(q); };
+  } finally {
+    if (run === me) run = null;
+    dock.classList.remove('busy');
+    t.classList.add('done');
+    updateJump();
+  }
+}
+
+async function streamText(node, text, me, stopAfter){
+  const paras = text.split(/\n\n/);
+  const cursor = el('span', 'cursor');
+  let count = 0;
+  for (const p of paras){
+    const P = el('p'); node.appendChild(P);
+    const tokens = p.split(/(\*\*[^*]+\*\*|\s+)/).filter(Boolean);
+    for (const tok of tokens){
+      if (/^\s+$/.test(tok)) { P.appendChild(document.createTextNode(' ')); continue; }
+      const bold = /^\*\*/.test(tok);
+      const words = bold ? tok.slice(2, -2).split(' ') : [tok];
+      for (let wi = 0; wi < words.length; wi++){
+        const s = el(bold ? 'strong' : 'span', 'aw'); s.textContent = words[wi];
+        P.appendChild(s); if (bold && wi < words.length - 1) P.appendChild(document.createTextNode(' '));
+        P.appendChild(cursor);
+        count++;
+        if (stopAfter && count === stopAfter) { stopRun(); }
+        await sleep(32 + Math.random() * 30, me);
+      }
+    }
+  }
+  cursor.remove();
+}
+
+function img(c){
+  return c.img
+    ? `<img src="${c.img}" alt="" loading="lazy" onerror="this.parentNode.classList.add('fallback');this.outerHTML='<b>${esc(c.title)}</b>'">`
+    : `<b>${esc(c.title)}</b>`;
+}
+function caseCard(k){
+  const c = CASES[k];
+  return `<a class="case rv" href="${c.href}" target="_blank" rel="noopener">
+    <div class="im ${c.img ? '' : 'fallback'}">${img(c)}<span class="tag">${esc(c.tag)}</span></div>
+    <div class="meta"><div><h3>${esc(c.title)}<span class="go">↗</span></h3><p>${esc(c.desc)}</p></div>
+    ${''}<div class="tags">${c.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div></div>
+  </a>`;
+}
+function renderCases(keys){
+  const wrap = el('div');
+  // mobile shows everything in the swipe row; desktop caps at 4 + "Show n more"
+  const mobile = matchMedia('(max-width:720px)').matches;
+  const shown = keys.length > 4 && !mobile ? keys.slice(0, 4) : keys;
+  const g = el('div', 'cases' + (shown.length === 1 ? ' one' : shown.length === 3 ? ' three' : ''));
+  g.innerHTML = shown.map(caseCard).join('');
+  // only the single-case layout shows the tag row; grid uses the overlay tag
+  if (shown.length !== 1) g.querySelectorAll('.tags').forEach(t => t.remove());
+  wrap.appendChild(g);
+  if (shown.length < keys.length){
+    const m = el('button', 'more', `Show ${keys.length - 4} more`);
+    m.onclick = () => { const extra = el('div', 'cases'); extra.style.marginTop = '40px'; extra.innerHTML = keys.slice(4).map(caseCard).join(''); extra.querySelectorAll('.tags').forEach(t => t.remove()); m.replaceWith(extra); reveal(extra.querySelectorAll('.rv')); };
+    wrap.appendChild(m);
+  }
+  return wrap;
+}
+function renderSkeleton(n){
+  const s = el('div', 'cases' + (n === 1 ? ' one' : ''));
+  s.innerHTML = Array.from({length:n}, () => `<div class="case skel"><div class="im"></div><div class="l1"></div><div class="l2"></div></div>`).join('');
+  s.classList.add('skel-wrap'); s.querySelectorAll('.case').forEach(c => c.classList.add('skel'));
+  const w = el('div', 'skel'); w.appendChild(s); return w;
+}
+function renderLinks(links){
+  const d = el('div', 'reads rv');
+  d.innerHTML = `<div class="label">Read more</div>` + links.map(l => `<a class="read" href="${l.href}" target="_blank" rel="noopener"><span class="t">${esc(l.label)}</span><span><small>${esc(l.kind)}</small>↗</span></a>`).join('');
+  return d;
+}
+function renderDeeper(list){
+  const d = el('div', 'deeper');
+  d.innerHTML = `<div class="label rv">Go deeper</div>` + list.slice(0, 3).map(f => `<button class="deep rv" data-q="${esc(f)}"><span class="hook">↳</span><span>${esc(f)}</span></button>`).join('');
+  d.querySelectorAll('.deep').forEach(b => b.onclick = () => { if (run) return toast('Wait for this answer, or press stop'); ask(b.dataset.q); });
+  return d;
+}
+function renderContact(){
+  const d = el('div', 'contact rv');
+  d.innerHTML = `<h4>Let’s talk about it.<span>We reply within a working day.</span></h4>
+    <div class="acts"><a class="btn-light" href="${A}/contact" target="_blank" rel="noopener">Book a call</a><button class="copy">hello@parallelhq.com</button></div>`;
+  d.querySelector('.copy').onclick = () => { navigator.clipboard?.writeText('hello@parallelhq.com').catch(()=>{}); toast('Email copied'); };
+  return d;
+}
+function renderClarify(c, q){
+  const d = el('div', 'clarify');
+  d.innerHTML = `<h4>${esc(c.q)}</h4>` + c.options.map((o, i) => `<button class="opt" data-v="${esc(o)}">${esc(o)}<kbd>${i + 1}</kbd></button>`).join('')
+    + `<label class="opt own"><input placeholder="Something else…" maxlength="160"><kbd>${c.options.length + 1}</kbd></label>
+       <div class="row"><button class="skip">Skip</button></div>`;
+  const done = v => {
+    d.classList.add('answered');
+    d.querySelectorAll('.opt').forEach(o => o.classList.toggle('picked', o.dataset.v === v));
+    clarifyAnswer(d.closest('.turn'), v);
+  };
+  d.querySelectorAll('button.opt').forEach(b => b.onclick = () => done(b.dataset.v));
+  const own = d.querySelector('.own input');
+  own.addEventListener('keydown', e => { if (e.key === 'Enter' && own.value.trim()) { e.preventDefault(); done(own.value.trim()); } });
+  d.querySelector('.skip').onclick = () => done(null);
+  return d;
+}
+async function clarifyAnswer(turn, v){
+  const me = run = {stopped:false};
+  dock.classList.add('busy');
+  try {
+    const think = el('div', 'thinking', `<span class="mark"><i></i><i></i></span><span class="status">Working out a range</span>`);
+    turn.appendChild(think); think.scrollIntoView({behavior:'smooth', block:'nearest'});
+    await sleep(1400, me); think.remove();
+    const ans = el('div', 'answer'); turn.appendChild(ans);
+    const txt = v
+      ? `For **${v.toLowerCase()}**, teams usually start with a 2-week sprint so we can both see how we work before committing to the full scope. A short call is the fastest way to get a real number.`
+      : `No problem. Most teams start with a 2-week sprint so we can both see how we work before committing to the full scope. A short call is the fastest way to get a real number.`;
+    await streamText(ans, txt, me);
+    const c = renderContact(); turn.appendChild(c); reveal([c]);
+    const f = renderDeeper(['What happens in the first two weeks?','Who would be on my team?']); turn.appendChild(f); reveal(f.querySelectorAll('.rv'), 80);
+  } catch(e){ turn.querySelector('.thinking')?.remove(); turn.querySelector('.cursor')?.remove(); }
+  finally { if (run === me) run = null; dock.classList.remove('busy'); updateJump(); }
+}
+
+function showError(t, kind, q){
+  const map = {
+    network:['err', 'Couldn’t reach the assistant. Nothing you typed was lost.', 'Try again'],
+    offline:['err warn', 'You’re offline. Reconnect and try again.', 'Try again'],
+    rate:['err warn', 'That’s a lot of questions in a row. Give it a minute, or write to us directly.', 'Email us'],
+  };
+  const [cls, msg, cta] = map[kind];
+  const e = el('div', cls + ' rv', `<span class="dot"></span><span>${msg}</span><button class="link-btn">${cta}</button>`);
+  t.appendChild(e); reveal([e]);
+  e.querySelector('button').onclick = () => {
+    if (kind === 'rate') { location.href = 'mailto:hello@parallelhq.com'; return; }
+    t.remove(); ask(q.replace(/__\w+/g, '').trim() || 'Show me your AI work');
+  };
+  if (kind === 'rate') lockDock(60);
+}
+function lockDock(sec){
+  lockedUntil = Date.now() + sec * 1000;
+  dock.classList.add('locked'); input.disabled = true;
+  const tick = () => {
+    const left = Math.ceil((lockedUntil - Date.now()) / 1000);
+    if (left <= 0){ dock.classList.remove('locked'); input.disabled = false; input.placeholder = ''; syncInput(); return; }
+    input.placeholder = `You can ask again in ${left}s`; setTimeout(tick, 1000);
+  };
+  tick();
+}
+
+/* restore a chat after navigating between pages (sessionStorage) */
+function restore(){
+  $('#newChat').hidden = false;
+  history.forEach(({q, r}) => {
+    const t = el('section', 'turn done');
+    t.innerHTML = `<h2 class="q ${qSize(q)}">${esc(q)}</h2><div class="answer">${r.text.split(/\n\n/).map(p => '<p>' + esc(p).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') + '</p>').join('')}</div>`;
+    if (r.cases?.length) t.appendChild(renderCases(r.cases));
+    if (r.links?.length) t.appendChild(renderLinks(r.links));
+    if (r.contact) t.appendChild(renderContact());
+    if (r.followups?.length && !r.clarify) t.appendChild(renderDeeper(r.followups));
+    t.querySelectorAll('.rv').forEach(n => n.classList.add('in'));
+    thread.appendChild(t);
+  });
+  requestAnimationFrame(() => { scroller.style.scrollBehavior = 'auto'; scroller.scrollTop = scroller.scrollHeight; scroller.style.scrollBehavior = ''; });
+}
+
+/* jump-to-latest: shows when the newest content is below the fold */
+function updateJump(){
+  const last = thread.lastElementChild;
+  if (!last || !last.classList.contains('turn') || !body.classList.contains('open')) return $('#jump').classList.remove('show');
+  const contentBottom = last.offsetTop + last.scrollHeight - parseFloat(getComputedStyle(last).paddingBottom || 0);
+  const below = contentBottom - (scroller.scrollTop + scroller.clientHeight - 140);
+  $('#jump').classList.toggle('show', below > 200);
+}
+scroller.addEventListener('scroll', updateJump, {passive:true});
+setInterval(updateJump, 600);
+$('#jump').onclick = () => {
+  const last = thread.lastElementChild;
+  const contentBottom = last.offsetTop + last.scrollHeight - parseFloat(getComputedStyle(last).paddingBottom || 0);
+  scroller.scrollTo({top: contentBottom - scroller.clientHeight + 160, behavior:'smooth'});
+};
+addEventListener('online', () => toast('Back online'));
+addEventListener('offline', () => toast('You’re offline'));
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+$('#heroCards').innerHTML = ['meta','lume','inhouse','healthify'].map(k => `<img src="${CASES[k].img}" alt="" onerror="this.style.visibility='hidden'">`).join('');
+history = load();
+dock.classList.toggle('has-history', history.length > 0);
+syncInput();
+
+/* =========================================================
+   DEV PANEL — prototype only
+   ========================================================= */
+const STATES = [
+  ['Flows', null],
+  ['Closed pill', 'Typewriter placeholder. “/” or ⌘K focuses it. Blue dot = chat in progress.', () => { stopRun(); closeChat(); }],
+  ['Empty (just opened)', 'Never blank: headline, 4 starters by intent, recent work strip.', () => { reset(); openChat(); }],
+  ['Answer + cases (6)', 'Thinking steps → streamed text → 4 cards + “Show 2 more” → read more → go deeper.', () => go('Show me your AI work')],
+  ['Answer + 2 cases', '2-up grid. On mobile becomes a swipe row.', () => go('Any health products?')],
+  ['Answer + 3 cases', 'First card goes wide. Pixxel has no image → typographic fallback.', () => go('Show me brand and website work')],
+  ['Single case', 'Feature layout: 16:9 image, title left, tags right (home page pattern).', () => go('Tell me about Healthify')],
+  ['Text only + links', 'No cards. “Read more” rows link to site pages.', () => go('How long does a typical project take?')],
+  ['Clarifying question', 'Numbered options (keys 1–6), “something else”, skip. Then answer + contact.', () => go('What does a project cost?')],
+  ['Contact handoff', 'Dark card: Book a call + copy email.', () => go('I want to start a project')],
+  ['Edge cases', null],
+  ['No match', 'Honest “we haven’t done this” + closest work + contact. Never invent case studies.', () => go('Have you done fintech?')],
+  ['Off-topic', 'Polite redirect + on-topic follow-ups.', () => go('Tell me a joke')],
+  ['Don’t know', 'Low confidence → say so, hand to a human.', () => go('Do you sign NDAs before the first call?')],
+  ['Slow response', 'After ~8s: “Taking a little longer than usual”. Stop always available.', () => go('Show me AI work (slow)')],
+  ['Stopped mid-answer', 'Stop button ends stream; “Stopped” + Regenerate.', () => go('Show me your AI work', {stopAfter:9})],
+  ['Network error', 'Inline, keeps the question, Try again re-asks.', () => go('Show me your work __error')],
+  ['Offline', 'Detected before sending. Toast on reconnect.', () => go('Show me your work __offline')],
+  ['Very long question', 'Headline steps down 44 → 34 → 26px by length. Input counter from 400 chars; hard cap 500.', () => go('We are a seed-stage health company with a small engineering team and an AI coach already in beta, and we are trying to work out whether we need a full redesign or just help with onboarding before our US launch in March. Have you done anything like that?')],
+  ['Restored chat', 'Survives page navigation via sessionStorage. Reload the page to see it.', () => { closeChat(); location.reload(); }],
+  ['Reset everything', 'Clears the chat + storage.', () => { reset(); closeChat(); }],
+];
+function reset(){ stopRun(); run = null; history = []; save(); thread.innerHTML = ''; lockedUntil = 0; dock.classList.remove('locked','busy'); input.disabled = false; input.placeholder = ''; }
+function go(q, opts){ reset(); openChat(); thread.innerHTML = ''; setTimeout(() => ask(q, opts), 250); }
+(function buildDev(){
+  const p = $('#devPanel');
+  STATES.forEach(([name, note, fn]) => {
+    if (!fn){ p.appendChild(el('p', 'h', name)); return; }
+    const b = el('button', null, `<b>${name}</b><span>${note}</span>`);
+    b.onclick = () => { $('#dev').classList.remove('open'); $('#devToggle').textContent = 'States ▴'; fn(); };
+    p.appendChild(b);
+  });
+  $('#devToggle').onclick = () => { const o = $('#dev').classList.toggle('open'); $('#devToggle').textContent = o ? 'States ▾' : 'States ▴'; };
+})();
+</script>
+</body>
+</html>
