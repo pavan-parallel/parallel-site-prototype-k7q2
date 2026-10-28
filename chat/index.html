@@ -73,7 +73,7 @@ body.open .dock{width:min(var(--col), calc(100vw - 32px));bottom:28px}
 .dock textarea{
   flex:1;resize:none;border:0;outline:0;background:transparent;
   font:500 16px/24px var(--sans);color:var(--ink-2);
-  padding:20px 0 20px 28px;max-height:144px;overflow-y:auto;
+  display:block;padding:0;margin:20px 0 20px 28px;height:24px;max-height:120px;overflow-y:auto;
 }
 .dock textarea::placeholder{color:var(--grey-2);font-weight:400}
 .dock .ph{position:absolute;left:28px;top:20px;pointer-events:none;color:var(--grey);font-size:16px;white-space:nowrap;overflow:hidden;max-width:calc(100% - 90px)}
@@ -285,7 +285,7 @@ body.open .overlay{opacity:1;visibility:visible;transition:opacity .45s var(--ea
   .hero-cards img:nth-child(n+3){display:none}
   .dock{width:calc(100vw - 32px);bottom:calc(16px + env(safe-area-inset-bottom))}
   body.open .dock{width:calc(100vw - 24px);bottom:calc(12px + env(safe-area-inset-bottom))}
-  .dock textarea{padding:16px 0 16px 20px;font-size:16px}
+  .dock textarea{margin:16px 0 16px 20px;font-size:16px}
   .dock .ph{left:20px;top:16px}
   .dock-actions{padding:8px 8px 8px 6px}
   .bar{height:64px}
@@ -550,8 +550,9 @@ document.addEventListener('keydown', e => {
    INPUT
    ========================================================= */
 function syncInput(){
-  input.style.height = 'auto';
-  input.style.height = Math.min(input.scrollHeight, 144) + 'px';
+  // no padding on the textarea, so scrollHeight is just the text lines in every browser
+  input.style.height = '0px';
+  input.style.height = Math.min(Math.max(input.scrollHeight, 24), 120) + 'px';
   const len = input.value.length, trimmed = input.value.trim();
   dock.classList.toggle('has-text', len > 0);
   $('#send').disabled = !trimmed || len > MAX || Date.now() < lockedUntil;
