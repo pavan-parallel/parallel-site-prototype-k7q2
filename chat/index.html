@@ -241,15 +241,18 @@ body.open .overlay{opacity:1;visibility:visible;transition:opacity .45s var(--ea
 .clarify .skip:hover{color:var(--ink)}
 .clarify.answered{opacity:.5;pointer-events:none}
 
-/* ---------- Contact card ---------- */
-.contact{margin-top:40px;background:var(--ink);color:#fff;border-radius:20px;padding:36px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
-.contact h4{font-family:var(--serif);font-weight:400;font-size:32px;line-height:38px;letter-spacing:-.8px}
-.contact h4 span{display:block;color:#8a8a8f}
-.contact .acts{display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0}
-.btn-light{background:#fff;color:var(--ink);border-radius:100px;padding:15px 22px;font-size:15px;font-weight:500;line-height:15px;transition:transform .3s var(--ease)}
-.btn-light:hover{transform:translateY(-1px)}
-.copy{font-size:14px;color:#b5b5ba}
-.copy:hover{color:#fff}
+/* ---------- Contact card: the closing CTA from the Parallel page (.p-cta), sized for the 720 column ---------- */
+.contact{margin-top:40px;background:var(--off);border-radius:4px;padding:48px;display:flex;flex-direction:column;gap:32px}
+.contact h4{font-family:var(--serif);font-weight:400;font-size:40px;line-height:1.2;letter-spacing:-1.6px;color:var(--ink)}
+.contact .host{display:flex;flex-direction:column;align-items:flex-start;gap:24px;max-width:400px}
+.contact .who{display:flex;align-items:center;gap:16px}
+.contact .who img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--tag)}
+.contact .who strong{display:block;font-weight:600;font-size:17px;line-height:22px;color:var(--ink)}
+.contact .who span{display:block;font-size:15px;line-height:22px;color:var(--grey)}
+.contact p{font-size:18px;line-height:27px;color:var(--ink-2)}
+.contact .btn-dark{height:52px;padding:0 16px 0 24px;font-size:16px}
+.contact .btn-dark svg{width:20px;height:20px;transition:transform .35s var(--ease)}
+.contact .btn-dark:hover svg{transform:translate(2px,-2px)}
 
 /* ---------- Errors ---------- */
 .err{margin-top:28px;display:flex;align-items:center;gap:16px;font-size:16px;color:var(--ink-2)}
@@ -311,9 +314,9 @@ body.open .overlay{opacity:1;visibility:visible;transition:opacity .45s var(--ea
   .case h3 .go{opacity:1;transform:none}
   .deep{font-size:19px;line-height:26px;padding:8px 0}
   .opt kbd{display:none}
-  .contact{flex-direction:column;align-items:flex-start;padding:28px}
-  .contact h4{font-size:26px;line-height:32px}
-  .contact .acts{align-items:flex-start}
+  .contact{padding:32px 24px;gap:28px}
+  .contact h4{font-size:30px;letter-spacing:-1px}
+  .contact p{font-size:16px;line-height:24px}
   .jump{bottom:96px}
   .dev{left:auto;right:12px;top:12px;bottom:auto}
   .dev-panel{bottom:auto;top:44px;left:auto;right:0;width:280px}
@@ -391,6 +394,7 @@ body.open .overlay{opacity:1;visibility:visible;transition:opacity .45s var(--ea
    DATA — case studies (titles/copy pulled from review site)
    ========================================================= */
 const A = 'https://review.parallelhq.com';
+const P = 'https://pavan-parallel.github.io/parallel-site-prototype-k7q2'; // prototype assets (Robin's avatar); swap for the site's own path
 const CASES = {
   healthify:{title:'Healthify',desc:'Redesigning an AI health platform for a successful US launch',tag:'AI Health',tags:['User Research','AI Design Sprint'],img:A+'/home-nov/hero/healthify.avif',href:A+'/work/healthify-parallel'},
   pageloop:{title:'Pageloop',desc:'Building the AI-native content ops layer for SaaS',tag:'B2B SaaS',tags:['UX Design','UI Design'],img:A+'/work/index/vimeo-1102101572-poster.jpg',href:A+'/work/pageloop-parallel'},
@@ -419,7 +423,7 @@ const MAX = 500, WARN = 400;
      links:    [{label:'AI Native', kind:'Page', href:'...'}],
      followups:['...', '...', '...'],            // max 3
      clarify:  {q:'...', options:['...']},         // optional; replaces followups
-     contact:  true                                // optional; dark "Let's talk" card
+     contact:  true                                // optional; the Parallel page's closing "Book a call" card
    }
    ========================================================= */
 function respond(q){
@@ -443,7 +447,7 @@ function respond(q){
     followups:['How do you handle regulated industries?','Show me your AI work']};
   if (/talk|contact|hire|call|email|book|start a project/.test(s)) return {
     status:['Getting the right person'],
-    text:"The quickest way is a 30-minute call. Tell us what you're building and we'll tell you honestly whether we're the right team.",
+    text:"Happy to. On the call you'll get an honest read on whether we're the right team, even if the answer is no.",
     contact:true};
   if (caseKey) { const c = CASES[caseKey]; return {
     status:['Opening the '+c.title+' case study'],
@@ -754,9 +758,12 @@ function renderDeeper(list){
 }
 function renderContact(){
   const d = el('div', 'contact rv');
-  d.innerHTML = `<h4>Let’s talk about it.<span>We reply within a working day.</span></h4>
-    <div class="acts"><a class="btn-light" href="${A}/contact" target="_blank" rel="noopener">Book a call</a><button class="copy">hello@parallelhq.com</button></div>`;
-  d.querySelector('.copy').onclick = () => { navigator.clipboard?.writeText('hello@parallelhq.com').catch(()=>{}); toast('Email copied'); };
+  d.innerHTML = `<h4>Tell us what<br>you’re building.</h4>
+    <div class="host">
+      <div class="who"><img src="${P}/assets/img/parallel/avatar-robin.png" alt="" width="56" height="56" onerror="this.style.visibility='hidden'"><div><strong>Robin Dhanwani</strong><span>Founder and CEO</span></div></div>
+      <p>A 30-minute call. Bring your product, your roadmap, your problem.</p>
+      <a class="btn-dark" href="${A}/contact" target="_blank" rel="noopener">Book a call<svg viewBox="0 0 20 20" fill="none"><path d="M5 15L15 5M6.875 5H15v8.125" stroke="currentColor" stroke-width="0.94" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>`;
   return d;
 }
 function renderClarify(c, q){
@@ -874,7 +881,7 @@ const STATES = [
   ['Single case', 'Feature layout: 16:9 image, title left, tags right (home page pattern).', () => go('Tell me about Healthify')],
   ['Text only + links', 'No cards. “Read more” rows link to site pages.', () => go('How long does a typical project take?')],
   ['Clarifying question', 'Numbered options (keys 1–6), “something else”, skip. Then answer + contact.', () => go('What does a project cost?')],
-  ['Contact handoff', 'Dark card: Book a call + copy email.', () => go('I want to start a project')],
+  ['Contact handoff', 'The Parallel page’s closing CTA: Robin, a 30-minute call, Book a call.', () => go('I want to start a project')],
   ['Edge cases', null],
   ['No match', 'Honest “we haven’t done this” + closest work + contact. Never invent case studies.', () => go('Have you done fintech?')],
   ['Off-topic', 'Polite redirect + on-topic follow-ups.', () => go('Tell me a joke')],
